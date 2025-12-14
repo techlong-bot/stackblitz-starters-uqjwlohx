@@ -2,479 +2,530 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ENGINE | Terminal</title>
+    <title>ENGINE | Pro Terminal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Binance+Plex:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* ENGINE PALETTE */
-            --bg-body: #09090b;
-            --bg-panel: #121214;
-            --bg-input: #1c1c1f;
-            --border: #27272a;
-            --primary: #ededed;
-            --accent: #3b82f6; /* Blue */
-            --green: #22c55e;
-            --red: #ef4444;
-            --text-main: #f4f4f5;
-            --text-muted: #a1a1aa;
-            --hover: #27272a;
+            /* BINANCE PRO PALETTE */
+            --bg-body: #0b0e11;
+            --bg-panel: #161a1e;
+            --bg-hover: #2b3139;
+            --border: #252b36;
+            --text-main: #eaecef;
+            --text-muted: #848e9c;
+            --green: #0ecb81;
+            --red: #f6465d;
+            --yellow: #fcd535;
+            --primary: #fcd535;
+            --primary-text: #1e2329;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--bg-hover) var(--bg-body); }
         
         body {
             background-color: var(--bg-body);
             color: var(--text-main);
-            font-family: 'Inter', sans-serif;
+            font-family: 'IBM Plex Sans', sans-serif;
             margin: 0;
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            font-size: 13px;
+            font-size: 12px;
         }
 
-        /* --- 1. AUTH SCREEN --- */
-        #authScreen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-body);
-            z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
+        /* --- LAYOUT GRID --- */
+        .workspace {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 40px 1fr 300px;
+            flex: 1;
+            overflow: hidden;
         }
-        .auth-card {
-            width: 380px;
+
+        /* --- 1. HEADER --- */
+        .header {
+            grid-column: 1 / -1;
             background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
         }
-        .auth-logo { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 25px; letter-spacing: -1px; }
-        
-        .auth-tabs { display: flex; background: var(--bg-input); padding: 4px; border-radius: 8px; margin-bottom: 20px; }
-        .auth-tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; color: var(--text-muted); font-weight: 500; border-radius: 6px; font-size: 12px; transition: 0.2s; }
-        .auth-tab.active { background: var(--bg-panel); color: var(--text-main); shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .logo { font-weight: 700; font-size: 16px; color: var(--primary); letter-spacing: 1px; }
+        .ticker-scroll { flex: 1; margin: 0 40px; overflow: hidden; white-space: nowrap; color: var(--text-muted); font-size: 11px; }
+        .user-menu { display: flex; gap: 15px; font-weight: 600; font-size: 12px; align-items: center; }
+        .balance-pill { background: var(--bg-hover); padding: 4px 10px; border-radius: 4px; color: var(--text-main); }
 
-        .auth-input { width: 100%; padding: 10px; background: var(--bg-body); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
-        .auth-input:focus { border-color: var(--accent); outline: none; }
-        
-        .auth-btn { width: 100%; padding: 10px; background: var(--text-main); color: black; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 5px; }
-        .auth-btn:hover { opacity: 0.9; }
-        
-        .guest-btn { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 12px; }
-        .guest-btn:hover { border-color: var(--text-muted); color: var(--text-main); }
-
-        /* --- 2. APP LAYOUT --- */
-        #appScreen { display: none; height: 100%; flex-direction: column; }
-        
-        .header { height: 48px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
-        .logo-text { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 18px; letter-spacing: -1px; }
-        
-        .user-nav { display: flex; gap: 15px; align-items: center; }
-        .wallet-pill { background: var(--bg-input); padding: 4px 10px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-        .logout-link { color: var(--text-muted); cursor: pointer; font-size: 11px; text-decoration: underline; }
-
-        .workspace { display: grid; grid-template-columns: 260px 1fr 320px; grid-template-rows: 1fr 280px; flex: 1; overflow: hidden; }
-
-        /* LEFT SIDEBAR */
-        .market-sidebar { grid-row: 1 / -1; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        /* --- 2. MARKET LIST (LEFT) --- */
+        .panel-left {
+            grid-row: 2 / -1;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
         .search-box { padding: 10px; border-bottom: 1px solid var(--border); }
-        .market-list { overflow-y: auto; flex: 1; }
-        .market-item { display: flex; justify-content: space-between; padding: 8px 15px; cursor: pointer; border-bottom: 1px solid transparent; }
-        .market-item:hover { background: var(--hover); }
-        .market-item.active { background: #1f1f22; border-left: 2px solid var(--text-main); }
+        .search-input { width: 100%; background: var(--bg-body); border: 1px solid var(--border); padding: 6px; color: white; border-radius: 4px; font-size: 11px; }
         
-        /* CENTER CHART */
-        .chart-section { grid-column: 2; grid-row: 1; background: var(--bg-body); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
-        .ticker-bar { height: 45px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 15px; background: var(--bg-panel); }
-        .ticker-price { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--green); }
+        .market-header { display: flex; padding: 8px 12px; color: var(--text-muted); font-size: 10px; font-weight: 600; }
+        .coin-list { flex: 1; overflow-y: auto; }
+        .coin-row { display: flex; justify-content: space-between; padding: 8px 12px; cursor: pointer; transition: 0.1s; }
+        .coin-row:hover { background: var(--bg-hover); }
+        .coin-row.active { background: #2b3139; border-left: 2px solid var(--primary); }
+        
+        /* --- 3. CHART (CENTER TOP) --- */
+        .panel-center {
+            grid-row: 2;
+            background: var(--bg-body);
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+        .chart-nav { height: 40px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; gap: 20px; }
+        .pair-title { font-size: 16px; font-weight: 700; }
+        .price-live { font-size: 16px; font-weight: 600; color: var(--green); }
 
-        /* BOTTOM PANEL (TABS) */
-        .bottom-section { grid-column: 2; grid-row: 2; background: var(--bg-panel); border-top: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .panel-tabs { display: flex; border-bottom: 1px solid var(--border); background: #0e0e10; }
-        .p-tab { padding: 10px 20px; cursor: pointer; color: var(--text-muted); font-size: 12px; font-weight: 600; border-top: 2px solid transparent; }
-        .p-tab.active { color: var(--text-main); border-top-color: var(--accent); background: var(--bg-panel); }
+        /* --- 4. BOTTOM TABS (CENTER BOTTOM) --- */
+        .panel-bottom {
+            grid-column: 2;
+            grid-row: 3;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+        .tabs { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); }
+        .tab { padding: 10px 20px; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 12px; border-top: 2px solid transparent; }
+        .tab.active { color: var(--primary); border-top-color: var(--primary); background: var(--bg-body); }
         
-        .panel-content { flex: 1; overflow-y: auto; padding: 0; position: relative; }
-        .tab-view { display: none; width: 100%; height: 100%; }
-        .tab-view.show { display: block; }
+        .tab-content { flex: 1; overflow-y: auto; display: none; }
+        .tab-content.show { display: block; }
+
+        /* --- 5. ORDER BOOK & FORM (RIGHT) --- */
+        .panel-right {
+            grid-row: 2 / -1;
+            background: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* ORDER BOOK */
+        .order-book { height: 40%; overflow: hidden; display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
+        .ob-header { padding: 8px 12px; font-weight: 600; color: var(--text-muted); font-size: 11px; }
+        .ob-content { flex: 1; overflow-y: hidden; display: flex; flex-direction: column; }
+        .ob-row { display: flex; justify-content: space-between; padding: 2px 12px; font-family: 'Binance Plex', sans-serif; cursor: pointer; position: relative; }
+        .ob-row:hover { background: var(--bg-hover); }
+        .ob-bg { position: absolute; top:0; right:0; height:100%; opacity: 0.15; }
+        
+        /* TRADES */
+        .trade-list { height: 25%; border-bottom: 1px solid var(--border); overflow-y: hidden; }
+        
+        /* TRADE FORM */
+        .trade-form { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .form-toggle { display: flex; background: var(--bg-body); border-radius: 4px; padding: 2px; margin-bottom: 10px; }
+        .toggle-btn { flex: 1; text-align: center; padding: 6px; cursor: pointer; font-weight: 600; border-radius: 4px; color: var(--text-muted); }
+        .toggle-btn.active { background: var(--bg-hover); color: var(--text-main); }
+        
+        .input-wrap { position: relative; }
+        .input-wrap input { width: 100%; background: var(--bg-body); border: 1px solid var(--border); padding: 10px; color: white; border-radius: 4px; font-size: 12px; text-align: right; }
+        .input-label { position: absolute; left: 10px; top: 10px; color: var(--text-muted); }
+        
+        .btn-buy { width: 100%; padding: 12px; background: var(--green); border: none; border-radius: 4px; color: white; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-bot { width: 100%; padding: 12px; background: var(--primary); border: none; border-radius: 4px; color: var(--primary-text); font-weight: 700; cursor: pointer; font-size: 14px; }
+
+        /* --- AUTH SCREEN --- */
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 99; display: flex; justify-content: center; align-items: center; }
+        .auth-box { width: 360px; padding: 40px; background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .auth-btn { width: 100%; background: var(--primary); padding: 12px; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 15px; }
 
         /* TABLES */
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { text-align: left; padding: 8px 15px; color: var(--text-muted); font-size: 11px; background: #161618; position: sticky; top: 0; }
-        .data-table td { padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 8px 12px; color: var(--text-muted); font-weight: 500; font-size: 11px; background: var(--bg-panel); position: sticky; top: 0; }
+        td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
         
-        /* RIGHT SIDEBAR (CONTROLS + FEEDS) */
-        .control-sidebar { grid-column: 3; grid-row: 1 / -1; background: var(--bg-panel); display: flex; flex-direction: column; }
-        
-        /* RIGHT TABS */
-        .right-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 5px 10px; gap: 5px; }
-        .r-tab { flex: 1; text-align: center; padding: 6px; font-size: 11px; font-weight: 700; color: var(--text-muted); cursor: pointer; border-radius: 4px; }
-        .r-tab:hover { background: var(--bg-input); }
-        .r-tab.active { background: var(--bg-input); color: var(--text-main); }
-
-        /* RIGHT CONTENT */
-        .right-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-        
-        /* BOT FORM */
-        .form-area { padding: 15px; }
-        .input-group { margin-bottom: 12px; }
-        .input-label { display: block; color: var(--text-muted); font-size: 11px; margin-bottom: 4px; }
-        .input-field { width: 100%; background: var(--bg-body); border: 1px solid var(--border); padding: 8px; border-radius: 4px; color: white; font-family: inherit; }
-        .btn-action { width: 100%; background: var(--text-main); color: black; border: none; padding: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        
-        /* FEED ITEMS (WHALES/ARB) */
-        .feed-item { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 11px; font-family: 'JetBrains Mono', monospace; display: flex; justify-content: space-between; }
-        .feed-green { color: var(--green); } .feed-red { color: var(--red); }
-
-        .ai-card { margin: 15px; padding: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; cursor: pointer; }
-        
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+        /* UTILS */
+        .text-green { color: var(--green); } .text-red { color: var(--red); }
+        .text-white { color: white; }
     </style>
 </head>
 <body>
 
-    <div id="authScreen">
-        <div class="auth-card">
-            <div class="auth-logo">/// ENGINE</div>
-            
-            <div class="auth-tabs">
-                <div class="auth-tab active" id="tLogin" onclick="authTab('login')">Login</div>
-                <div class="auth-tab" id="tSignup" onclick="authTab('signup')">Sign Up</div>
-            </div>
-
-            <div id="loginForm">
-                <input type="email" id="lEmail" class="auth-input" placeholder="Email">
-                <input type="password" id="lPass" class="auth-input" placeholder="Password">
-                <button class="auth-btn" onclick="login()">Enter Terminal</button>
-            </div>
-
-            <div id="signupForm" style="display:none">
-                <input type="text" id="sName" class="auth-input" placeholder="Username">
-                <input type="email" id="sEmail" class="auth-input" placeholder="Email">
-                <input type="password" id="sPass" class="auth-input" placeholder="Password">
-                <button class="auth-btn" onclick="signup()">Create ID</button>
-            </div>
-
-            <button class="guest-btn" onclick="guestLogin()">Continue as Guest (No Save)</button>
+    <div id="authOverlay">
+        <div class="auth-box">
+            <div class="logo" style="font-size:24px; margin-bottom:20px">/// ENGINE</div>
+            <input id="loginName" placeholder="Enter Name" style="width:100%; padding:10px; background:#0b0e11; border:1px solid #252b36; color:white; border-radius:4px;">
+            <button class="auth-btn" onclick="login()">ENTER TERMINAL</button>
+            <div style="margin-top:15px; font-size:11px; color:#848e9c; cursor:pointer" onclick="loginGuest()">Continue as Guest</div>
         </div>
     </div>
 
-    <div id="appScreen">
-        <div class="header">
-            <div class="logo-text">/// ENGINE</div>
-            <div class="user-nav">
-                <div class="wallet-pill">USD: <span id="walletDisp">$10,000</span></div>
-                <div style="font-size:12px; font-weight:600" id="userDisp">Guest</div>
-                <div class="logout-link" onclick="logout()">Exit</div>
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:20px">
+            <div class="logo">/// ENGINE</div>
+            <div class="ticker-scroll" id="newsTicker">Connecting to global news wire...</div>
+        </div>
+        <div class="user-menu">
+            <div class="balance-pill">Est: <span id="walletVal">$10,000.00</span></div>
+            <span id="userName">User</span>
+            <span onclick="logout()" style="cursor:pointer; color:#848e9c">Exit</span>
+        </div>
+    </div>
+
+    <div class="workspace">
+        
+        <div class="panel-left">
+            <div class="search-box"><input type="text" class="search-input" placeholder="Search"></div>
+            <div class="market-header"><span>Pair</span><span style="margin-left:auto">Price</span></div>
+            <div id="marketList" class="coin-list"></div>
+        </div>
+
+        <div class="panel-center">
+            <div class="chart-nav">
+                <span class="pair-title" id="activePair">BTC/USDT</span>
+                <span class="price-live" id="activePrice">--</span>
+                <span style="font-size:11px; color:#848e9c">24h Change: <span id="activeChange">--%</span></span>
+            </div>
+            <div id="tv_chart" style="flex:1; width:100%"></div>
+        </div>
+
+        <div class="panel-bottom">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('bots', this)">Running Bots</div>
+                <div class="tab" onclick="switchTab('whales', this)">Whale Radar</div>
+                <div class="tab" onclick="switchTab('dex', this)">On-Chain Gems</div>
+            </div>
+            
+            <div id="tab-bots" class="tab-content show">
+                <table>
+                    <thead><tr><th>Time</th><th>Pair</th><th>Type</th><th>Invested</th><th>Grid Profit</th><th>Total PnL</th><th>Action</th></tr></thead>
+                    <tbody id="botTable"></tbody>
+                </table>
+            </div>
+            
+            <div id="tab-whales" class="tab-content">
+                <table>
+                    <thead><tr><th>Time</th><th>Pair</th><th>Side</th><th>Value</th><th>Price</th></tr></thead>
+                    <tbody id="whaleTable"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-dex" class="tab-content">
+                <table>
+                    <thead><tr><th>Rank</th><th>Token</th><th>Price Change</th><th>Link</th></tr></thead>
+                    <tbody id="dexTable"></tbody>
+                </table>
             </div>
         </div>
 
-        <div class="workspace">
+        <div class="panel-right">
             
-            <div class="market-sidebar">
-                <div class="search-box"><input type="text" class="auth-input" placeholder="Search..." style="margin:0; font-size:11px;"></div>
-                <div id="coinList" class="market-list"></div>
+            <div class="order-book">
+                <div class="ob-header">Order Book</div>
+                <div id="asks" style="flex:1; display:flex; flex-direction:column-reverse; overflow:hidden"></div>
+                <div style="padding:5px 12px; font-size:16px; font-weight:600; text-align:center" id="midPrice" class="text-green">--</div>
+                <div id="bids" style="flex:1; overflow:hidden"></div>
             </div>
 
-            <div class="chart-section">
-                <div class="ticker-bar">
-                    <div style="font-weight:700" id="chartSymbol">BTC/USDT</div>
-                    <div class="ticker-price" id="chartPrice">--</div>
-                    <div style="font-size:12px" id="chartChange">--%</div>
-                </div>
-                <div id="tv_chart" style="flex:1; width:100%;"></div>
+            <div class="trade-list">
+                <div class="ob-header">Recent Trades</div>
+                <div id="tradeList" style="overflow-y:hidden; height:100%"></div>
             </div>
 
-            <div class="bottom-section">
-                <div class="panel-tabs">
-                    <div class="p-tab active" onclick="switchBottom('bots', this)">Active Bots</div>
-                    <div class="p-tab" onclick="switchBottom('dex', this)">💎 DEX Gems</div>
+            <div class="trade-form">
+                <div class="form-toggle">
+                    <div class="toggle-btn active" onclick="setMode('MANUAL', this)">Spot</div>
+                    <div class="toggle-btn" onclick="setMode('BOT', this)">Grid Bot</div>
                 </div>
-                
-                <div class="panel-content">
-                    <div id="view-bots" class="tab-view show">
-                        <table class="data-table">
-                            <thead><tr><th>Pair</th><th>Range</th><th>Invested</th><th>PnL</th><th>Status</th><th>Action</th></tr></thead>
-                            <tbody id="botTableBody"></tbody>
-                        </table>
-                    </div>
-                    <div id="view-dex" class="tab-view">
-                        <table class="data-table">
-                            <thead><tr><th>Coin</th><th>Price Change</th><th>Rank</th><th>Link</th></tr></thead>
-                            <tbody id="dexTableBody"><tr><td colspan="4" style="padding:20px; color:#555">Scanning Chain...</td></tr></tbody>
-                        </table>
-                    </div>
+
+                <div id="manualForm">
+                    <div class="input-wrap"><span class="input-label">Price</span><input id="spotPrice" value="Market"></div>
+                    <div class="input-wrap" style="margin-top:10px"><span class="input-label">Amount</span><input id="spotAmt" placeholder="USDT"></div>
+                    <button class="btn-buy" style="margin-top:15px" onclick="placeOrder()">BUY BTC</button>
+                </div>
+
+                <div id="botForm" style="display:none">
+                    <div class="input-wrap"><span class="input-label">Low</span><input id="botLow"></div>
+                    <div class="input-wrap" style="margin-top:5px"><span class="input-label">High</span><input id="botHigh"></div>
+                    <div class="input-wrap" style="margin-top:5px"><span class="input-label">Grids</span><input id="botGrids" value="20"></div>
+                    <div class="input-wrap" style="margin-top:5px"><span class="input-label">Inv</span><input id="botInv"></div>
+                    <button class="btn-bot" style="margin-top:15px" onclick="createBot()">CREATE BOT</button>
+                    <div style="text-align:center; margin-top:5px; font-size:10px; color:#848e9c; cursor:pointer" onclick="fillAI()">⚡ Auto-Fill AI Parameters</div>
                 </div>
             </div>
 
-            <div class="control-sidebar">
-                <div class="right-tabs">
-                    <div class="r-tab active" onclick="switchRight('ctrl', this)">BOT</div>
-                    <div class="r-tab" onclick="switchRight('whale', this)">WHALE</div>
-                    <div class="r-tab" onclick="switchRight('arb', this)">ARB</div>
-                </div>
-
-                <div id="r-ctrl" class="right-content" style="display:flex">
-                    <div class="ai-card" onclick="fillAI()">
-                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700">
-                            <span>AI STRATEGY</span>
-                            <span style="color:var(--accent)">AUTO</span>
-                        </div>
-                        <div style="font-size:10px; color:var(--text-muted); margin-top:5px">
-                            Range: <span id="aiRange">...</span><br>
-                            Est. APY: 124%
-                        </div>
-                    </div>
-                    <div class="form-area">
-                        <div class="input-group"><label class="input-label">Low</label><input id="iLow" type="number" class="input-field"></div>
-                        <div class="input-group"><label class="input-label">High</label><input id="iHigh" type="number" class="input-field"></div>
-                        <div class="input-group"><label class="input-label">Grids</label><input id="iGrids" type="number" class="input-field"></div>
-                        <div class="input-group"><label class="input-label">Amount</label><input id="iAmt" type="number" class="input-field"></div>
-                        <button class="btn-action" onclick="createBot()">LAUNCH GRID</button>
-                    </div>
-                </div>
-
-                <div id="r-whale" class="right-content" style="display:none">
-                    <div id="whaleList" style="flex:1; overflow-y:auto"></div>
-                </div>
-
-                <div id="r-arb" class="right-content" style="display:none">
-                    <div id="arbList" style="flex:1; overflow-y:auto"></div>
-                </div>
-
-            </div>
         </div>
     </div>
 
     <script>
-        // --- AUTH LOGIC ---
-        let currentUser = null;
-        
-        function authTab(t) {
-            document.getElementById('tLogin').classList.toggle('active', t==='login');
-            document.getElementById('tSignup').classList.toggle('active', t==='signup');
-            document.getElementById('loginForm').style.display = t==='login'?'block':'none';
-            document.getElementById('signupForm').style.display = t==='signup'?'block':'none';
-        }
-
-        function guestLogin() {
-            currentUser = { name: "Guest", wallet: 10000, bots: [] };
-            enterApp();
-        }
-
-        function signup() {
-            const name = document.getElementById('sName').value;
-            if(!name) return alert("Name required");
-            const user = { name, wallet: 10000, bots: [] };
-            localStorage.setItem('engineUser', JSON.stringify(user));
-            alert("Created. Please Login.");
-            authTab('login');
-        }
-
-        function login() {
-            const saved = localStorage.getItem('engineUser');
-            if(saved) {
-                currentUser = JSON.parse(saved);
-                enterApp();
-            } else {
-                alert("User not found. Try Guest Mode.");
-            }
-        }
-
-        function logout() { location.reload(); }
-
-        function enterApp() {
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'flex';
-            document.getElementById('userDisp').innerText = currentUser.name;
-            updateWalletUI();
-            initTrading();
-        }
-
-        // --- TAB LOGIC ---
-        function switchBottom(view, tabEl) {
-            document.querySelectorAll('.p-tab').forEach(e => e.classList.remove('active'));
-            tabEl.classList.add('active');
-            document.querySelectorAll('.tab-view').forEach(e => e.classList.remove('show'));
-            document.getElementById(`view-${view}`).classList.add('show');
-            if(view === 'dex') fetchDex();
-        }
-
-        function switchRight(view, tabEl) {
-            document.querySelectorAll('.r-tab').forEach(e => e.classList.remove('active'));
-            tabEl.classList.add('active');
-            document.querySelectorAll('.right-content').forEach(e => e.style.display = 'none');
-            document.getElementById(`r-${view}`).style.display = view === 'ctrl' ? 'block' : 'flex';
-        }
-
-        // --- TRADING ENGINE ---
+        // --- STATE ---
         const COINS = ["BTC","ETH","SOL","BNB","DOGE","XRP","ADA","AVAX","DOT","MATIC"];
         let activeSym = "BTC";
-        let prices = {};
+        let prices = {}; 
+        let user = { name: "Guest", wallet: 10000, bots: [] };
+        let ws = null; // Ticker Socket
+        let depthWs = null; // Orderbook Socket
 
-        function initTrading() {
-            renderCoins();
+        // --- 1. AUTH ---
+        function login() {
+            const name = document.getElementById('loginName').value;
+            if(name) {
+                user.name = name;
+                document.getElementById('authOverlay').style.display = 'none';
+                initApp();
+            }
+        }
+        function loginGuest() {
+            document.getElementById('authOverlay').style.display = 'none';
+            initApp();
+        }
+        function logout() { location.reload(); }
+
+        // --- 2. INIT ---
+        function initApp() {
+            document.getElementById('userName').innerText = user.name;
+            updateWallet();
+            renderMarkets();
             loadChart(activeSym);
-            startSocket();
-            startWhales();
-            startArb();
+            fetchNews();
+            fetchDex();
+            
+            // Start Global Ticker Stream
+            ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+            ws.onmessage = e => handleTicker(JSON.parse(e.data));
+
+            // Start Specific Stream (Orderbook/Trades)
+            subscribeSymbol(activeSym);
+
             setInterval(updateBots, 1000);
         }
 
-        function renderCoins() {
-            const l = document.getElementById('coinList');
-            l.innerHTML = "";
-            COINS.forEach(s => {
-                const el = document.createElement('div');
-                el.className = `market-item ${s===activeSym?'active':''}`;
-                el.id = `item-${s}`;
-                el.onclick = () => changeCoin(s);
-                el.innerHTML = `<span style="font-weight:600; color:#ddd">${s}</span><span id="p-${s}" style="color:#777">--</span>`;
-                l.appendChild(el);
+        // --- 3. MARKET DATA ---
+        function renderMarkets() {
+            const list = document.getElementById('marketList');
+            list.innerHTML = "";
+            COINS.forEach(sym => {
+                const row = document.createElement('div');
+                row.className = `coin-row ${sym===activeSym?'active':''}`;
+                row.id = `row-${sym}`;
+                row.onclick = () => switchCoin(sym);
+                row.innerHTML = `
+                    <div style="font-weight:600">${sym}/USDT</div>
+                    <div id="price-${sym}" style="font-family:'Binance Plex'">--</div>
+                `;
+                list.appendChild(row);
             });
         }
 
-        function changeCoin(s) {
-            document.getElementById(`item-${activeSym}`).classList.remove('active');
-            activeSym = s;
-            document.getElementById(`item-${activeSym}`).classList.add('active');
-            document.getElementById('chartSymbol').innerText = s + "/USDT";
-            loadChart(s);
-            updateAI();
+        function handleTicker(data) {
+            data.forEach(t => {
+                const s = t.s.replace('USDT','');
+                if(COINS.includes(s)) {
+                    prices[s] = parseFloat(t.c);
+                    const el = document.getElementById(`price-${s}`);
+                    if(el) {
+                        el.innerText = prices[s].toFixed(prices[s]<1?4:2);
+                        el.style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
+                    }
+                    if(s === activeSym) {
+                        document.getElementById('activePrice').innerText = prices[s].toFixed(2);
+                        document.getElementById('midPrice').innerText = prices[s].toFixed(2);
+                        document.getElementById('activeChange').innerText = parseFloat(t.P).toFixed(2)+"%";
+                        document.getElementById('activeChange').style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
+                    }
+                }
+            });
+        }
+
+        function switchCoin(sym) {
+            document.getElementById(`row-${activeSym}`).classList.remove('active');
+            activeSym = sym;
+            document.getElementById(`row-${activeSym}`).classList.add('active');
+            document.getElementById('activePair').innerText = sym+"/USDT";
+            document.querySelector('.btn-buy').innerText = "BUY "+sym;
+            
+            loadChart(sym);
+            subscribeSymbol(sym);
         }
 
         function loadChart(s) {
             document.getElementById('tv_chart').innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=BINANCE:${s}USDT&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC" style="width:100%; height:100%; border:none;"></iframe>`;
         }
 
-        function startSocket() {
-            const ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
-            ws.onmessage = e => {
+        // --- 4. DEPTH & TRADES (REAL TIME) ---
+        function subscribeSymbol(sym) {
+            if(depthWs) depthWs.close();
+            const pair = sym.toLowerCase() + "usdt";
+            // Subscribe to Depth20 + Trade + AggTrade
+            depthWs = new WebSocket(`wss://stream.binance.com:9443/ws/${pair}@depth20/${pair}@trade`);
+            
+            depthWs.onmessage = e => {
                 const d = JSON.parse(e.data);
-                d.forEach(t => {
-                    const s = t.s.replace('USDT','');
-                    if(COINS.includes(s)) {
-                        prices[s] = parseFloat(t.c);
-                        const el = document.getElementById(`p-${s}`);
-                        if(el) {
-                            el.innerText = prices[s].toFixed(prices[s]<1?4:2);
-                            el.style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
-                        }
-                        if(s === activeSym) {
-                            document.getElementById('chartPrice').innerText = prices[s].toFixed(2);
-                            document.getElementById('chartChange').innerText = parseFloat(t.P).toFixed(2)+"%";
-                            document.getElementById('chartChange').style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
-                        }
-                    }
-                });
-            }
+                if(d.e === 'depthUpdate' || d.bids) renderOrderBook(d);
+                if(d.e === 'trade') renderTrade(d);
+            };
         }
 
-        // --- FEATURES ---
-        function getAIParams() {
-            const p = prices[activeSym] || 0;
-            return { l: (p*0.9).toFixed(2), h: (p*1.1).toFixed(2), g: 20 };
+        function renderOrderBook(d) {
+            // Binance sends 'bids' and 'asks' arrays
+            if(!d.bids) return; 
+            const asks = document.getElementById('asks');
+            const bids = document.getElementById('bids');
+            
+            // Simple render of top 8
+            asks.innerHTML = d.asks.slice(0,8).reverse().map(a => `
+                <div class="ob-row">
+                    <div class="ob-bg" style="width:${Math.random()*100}%; background:var(--red)"></div>
+                    <span class="text-red">${parseFloat(a[0]).toFixed(2)}</span>
+                    <span style="z-index:1">${parseFloat(a[1]).toFixed(3)}</span>
+                </div>
+            `).join('');
+
+            bids.innerHTML = d.bids.slice(0,8).map(b => `
+                <div class="ob-row">
+                    <div class="ob-bg" style="width:${Math.random()*100}%; background:var(--green)"></div>
+                    <span class="text-green">${parseFloat(b[0]).toFixed(2)}</span>
+                    <span style="z-index:1">${parseFloat(b[1]).toFixed(3)}</span>
+                </div>
+            `).join('');
         }
-        function updateAI() {
-            const p = getAIParams();
-            document.getElementById('aiRange').innerText = `${p.l} - ${p.h}`;
+
+        function renderTrade(t) {
+            const list = document.getElementById('tradeList');
+            const row = document.createElement('div');
+            row.className = 'ob-row';
+            row.innerHTML = `
+                <span class="${t.m?'text-red':'text-green'}">${parseFloat(t.p).toFixed(2)}</span>
+                <span style="color:#ddd">${parseFloat(t.q).toFixed(4)}</span>
+                <span style="color:#666">${new Date(t.T).toLocaleTimeString().split(' ')[0]}</span>
+            `;
+            list.prepend(row);
+            if(list.children.length > 15) list.lastChild.remove();
+
+            // Whale Check
+            const val = parseFloat(t.p) * parseFloat(t.q);
+            if(val > 50000) logWhale(t, val);
         }
+
+        function logWhale(t, val) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${new Date(t.T).toLocaleTimeString()}</td>
+                <td>${activeSym}</td>
+                <td class="${t.m?'text-red':'text-green'}">${t.m?'SELL':'BUY'}</td>
+                <td>$${Math.floor(val/1000)}k</td>
+                <td>${parseFloat(t.p).toFixed(2)}</td>
+            `;
+            document.getElementById('whaleTable').prepend(row);
+        }
+
+        // --- 5. BOT & TRADE LOGIC ---
+        function setMode(mode, btn) {
+            document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('manualForm').style.display = mode==='MANUAL'?'block':'none';
+            document.getElementById('botForm').style.display = mode==='BOT'?'block':'none';
+        }
+
         function fillAI() {
-            const p = getAIParams();
-            document.getElementById('iLow').value = p.l;
-            document.getElementById('iHigh').value = p.h;
-            document.getElementById('iGrids').value = p.g;
-            document.getElementById('iAmt').value = 1000;
+            const p = prices[activeSym];
+            document.getElementById('botLow').value = (p*0.9).toFixed(2);
+            document.getElementById('botHigh').value = (p*1.1).toFixed(2);
+            document.getElementById('botInv').value = 1000;
         }
 
         function createBot() {
-            const amt = parseFloat(document.getElementById('iAmt').value);
-            if(amt > currentUser.wallet) return alert("Low Funds");
-            currentUser.wallet -= amt;
-            updateWalletUI();
-            currentUser.bots.push({ id: Date.now(), pair: activeSym, entry: prices[activeSym], invest: amt, pnl: 0 });
+            const invest = parseFloat(document.getElementById('botInv').value);
+            if(invest > user.wallet) return alert("Funds low");
+            
+            user.wallet -= invest;
+            updateWallet();
+            
+            user.bots.push({
+                id: Date.now(),
+                pair: activeSym,
+                range: `${document.getElementById('botLow').value} - ${document.getElementById('botHigh').value}`,
+                invest: invest,
+                profit: 0
+            });
             renderBots();
         }
 
         function updateBots() {
-            currentUser.bots.forEach(b => {
-                if(Math.random()>0.7) b.pnl += b.invest * 0.0001; // Sim profit
+            user.bots.forEach(b => {
+                if(Math.random() > 0.8) b.profit += b.invest * 0.0002;
             });
             renderBots();
         }
 
         function renderBots() {
-            const tb = document.getElementById('botTableBody');
-            tb.innerHTML = "";
-            currentUser.bots.forEach((b, i) => {
-                const curr = prices[b.pair] || b.entry;
-                const net = (curr - b.entry)/b.entry * b.invest + b.pnl;
-                tb.innerHTML += `<tr>
-                    <td>${b.pair}</td><td>Grid</td><td>$${b.invest}</td>
-                    <td class="${net>=0?'feed-green':'feed-red'}">$${net.toFixed(2)}</td>
-                    <td>Running</td>
-                    <td><button style="color:red; background:none; border:none; cursor:pointer" onclick="closeBot(${i})">Stop</button></td>
-                </tr>`;
-            });
+            const tb = document.getElementById('botTable');
+            tb.innerHTML = user.bots.map((b,i) => `
+                <tr>
+                    <td>${new Date(b.id).toLocaleTimeString()}</td>
+                    <td>${b.pair}</td>
+                    <td>Grid</td>
+                    <td>$${b.invest}</td>
+                    <td class="text-green">+$${b.profit.toFixed(2)}</td>
+                    <td class="text-green">+$${b.profit.toFixed(2)}</td>
+                    <td><button onclick="stopBot(${i})" style="color:red; background:none; border:none; cursor:pointer">Stop</button></td>
+                </tr>
+            `).join('');
         }
 
-        function closeBot(i) {
-            const b = currentUser.bots[i];
-            const curr = prices[b.pair];
-            const net = (curr - b.entry)/b.entry * b.invest + b.pnl;
-            currentUser.wallet += (b.invest + net);
-            currentUser.bots.splice(i,1);
-            updateWalletUI();
+        function stopBot(i) {
+            const b = user.bots[i];
+            user.wallet += (b.invest + b.profit);
+            user.bots.splice(i, 1);
+            updateWallet();
             renderBots();
         }
 
-        function updateWalletUI() {
-            document.getElementById('walletDisp').innerText = "$"+currentUser.wallet.toLocaleString(undefined,{minimumFractionDigits:2});
-        }
-
-        // --- EXTERNAL FEEDS ---
-        function startWhales() {
-            const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade/ethusdt@trade/solusdt@trade');
-            ws.onmessage = e => {
-                const d = JSON.parse(e.data);
-                const val = parseFloat(d.p)*parseFloat(d.q);
-                if(val > 50000) {
-                    const el = document.createElement('div');
-                    el.className = "feed-item";
-                    el.innerHTML = `<span>${d.s.replace('USDT','')}</span><span class="${d.m?'feed-red':'feed-green'}">$${Math.floor(val/1000)}k</span>`;
-                    document.getElementById('whaleList').prepend(el);
-                    if(document.getElementById('whaleList').children.length>20) document.getElementById('whaleList').lastChild.remove();
-                }
+        function placeOrder() {
+            const amt = parseFloat(document.getElementById('spotAmt').value);
+            if(amt && amt <= user.wallet) {
+                user.wallet -= amt;
+                updateWallet();
+                alert(`Bought $${amt} of ${activeSym}`);
+            } else {
+                alert("Invalid Amount");
             }
         }
 
-        function startArb() {
-            setInterval(() => {
-                const s = (Math.random()*0.5).toFixed(2);
-                const el = document.createElement('div');
-                el.className = "feed-item";
-                el.innerHTML = `<span>BTC (Bin>Coin)</span><span class="feed-green">+${s}%</span>`;
-                document.getElementById('arbList').prepend(el);
-                if(document.getElementById('arbList').children.length>20) document.getElementById('arbList').lastChild.remove();
-            }, 3000);
+        function updateWallet() {
+            document.getElementById('walletVal').innerText = `$${user.wallet.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+        }
+
+        // --- 6. EXTRAS ---
+        function switchTab(t, el) {
+            document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('show'));
+            document.getElementById(`tab-${t}`).classList.add('show');
+        }
+
+        async function fetchNews() {
+            const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss');
+            const d = await r.json();
+            document.getElementById('newsTicker').innerText = d.items.map(i => "🔥 "+i.title).join("   |   ");
         }
 
         async function fetchDex() {
-            try {
-                const r = await fetch('https://api.coingecko.com/api/v3/search/trending');
-                const d = await r.json();
-                const tb = document.getElementById('dexTableBody');
-                tb.innerHTML = d.coins.map(c => `<tr>
-                    <td>${c.item.symbol}</td>
-                    <td>#${c.item.market_cap_rank}</td>
-                    <td><a href="https://www.coingecko.com/en/coins/${c.item.id}" target="_blank" style="color:var(--accent)">View</a></td>
-                </tr>`).join('');
-            } catch(e){}
+            const r = await fetch('https://api.coingecko.com/api/v3/search/trending');
+            const d = await r.json();
+            document.getElementById('dexTable').innerHTML = d.coins.map(c => `<tr>
+                <td>#${c.item.market_cap_rank}</td>
+                <td><img src="${c.item.thumb}" width="15"> ${c.item.symbol}</td>
+                <td>${c.item.data.price_change_percentage_24h.usd.toFixed(2)}%</td>
+                <td><a href="#" style="color:var(--primary)">View</a></td>
+            </tr>`).join('');
         }
+
+        // START
+        if(user.name === 'Guest') initApp(); // Auto start guest for demo check
     </script>
 </body>
 </html>
