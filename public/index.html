@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Titan Hedge Fund Terminal</title>
+    <title>Titan Speed Terminal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #c9d1d9; --accent: #58a6ff; --green: #2ea043; --red: #ff7b72; }
         body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; overflow-x: hidden; }
         h1 { text-align: center; margin: 10px 0 20px 0; color: var(--accent); font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* GRID LAYOUT */
-        .grid { display: grid; grid-template-columns: 300px 1fr 300px; gap: 15px; max-width: 1900px; margin: 0 auto; }
+        /* GRID SYSTEM */
+        .grid { display: grid; grid-template-columns: 280px 1fr 280px; gap: 15px; max-width: 1900px; margin: 0 auto; }
         @media (max-width: 1400px) { .grid { grid-template-columns: 1fr 1fr; } .sidebar-right { grid-column: span 2; } }
         @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .sidebar-right { grid-column: span 1; } }
 
@@ -17,33 +17,28 @@
         .panel-short { height: 390px; }
         
         .header { padding: 10px 15px; background: #010409; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-        .live-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--green); margin-left: 5px; }
+        .live-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--green); margin-left: 5px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* ARBITRAGE SCANNER */
-        .arb-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; }
-        .arb-profit { color: var(--green); font-weight: bold; }
+        /* DATA FEEDS */
+        .arb-row, .dex-item, .whale-item { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .dex-item:hover, .arb-row:hover { background: #21262d; cursor: pointer; }
+        .whale-item { font-family: monospace; }
         
-        /* LONG/SHORT BAR */
-        .ls-bar { height: 6px; background: var(--red); border-radius: 3px; overflow: hidden; margin-top: 5px; display: flex; }
-        .ls-fill { height: 100%; background: var(--green); }
-        .ls-label { display: flex; justify-content: space-between; font-size: 10px; margin-top: 2px; color: #8b949e; }
-
-        /* DEX GEM LIST */
-        .dex-item { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-        .dex-item:hover { background: #21262d; }
-        .dex-name { font-weight: bold; color: #e3b341; font-size: 13px; }
-        .dex-meta { font-size: 11px; color: #8b949e; display: flex; justify-content: space-between; }
+        /* FLASH EFFECTS */
+        .flash-green { animation: flashG 0.5s; }
+        .flash-red { animation: flashR 0.5s; }
+        @keyframes flashG { 0% { background: rgba(46, 160, 67, 0.4); } 100% { background: transparent; } }
+        @keyframes flashR { 0% { background: rgba(255, 123, 114, 0.4); } 100% { background: transparent; } }
 
         /* MAIN TABLE */
         table { width: 100%; border-collapse: collapse; }
         th { text-align: right; padding: 10px; color: #8b949e; font-size: 10px; text-transform: uppercase; border-bottom: 1px solid var(--border); background: #0d1117; position: sticky; top: 0; }
         th:first-child { text-align: left; }
-        td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 12px; text-align: right; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 13px; text-align: right; font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
         td:first-child { text-align: left; }
         tr:hover { background: #21262d; cursor: pointer; }
         
-        /* UTILS */
-        .scroll-box { overflow-y: auto; flex: 1; }
         .btn { background: var(--border); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
         .btn:hover { background: var(--accent); }
         .green-txt { color: var(--green); } .red-txt { color: var(--red); }
@@ -55,52 +50,34 @@
 </head>
 <body>
 
-    <h1>⚡ Titan Hedge Fund Terminal</h1>
+    <h1>⚡ Titan Speed Terminal</h1>
 
     <div class="grid">
         
         <div style="display:flex; flex-direction:column; gap:15px">
-            
             <div class="panel panel-short">
-                <div class="header">
-                    <span>⚖️ ARBITRAGE SCANNER</span>
-                    <span class="live-dot"></span>
-                </div>
-                <div class="scroll-box" id="arbFeed">
-                    <div style="text-align:center; padding:20px; color:#8b949e">Scanning Exchanges...</div>
-                </div>
+                <div class="header"><span>⚖️ ARBITRAGE</span><span class="live-dot"></span></div>
+                <div style="overflow-y:auto" id="arbFeed"></div>
             </div>
-
             <div class="panel panel-short">
-                <div class="header">
-                    <span>🦄 DEX GEM HUNTER (On-Chain)</span>
-                    <button class="btn" onclick="fetchDexGems()">Refresh</button>
-                </div>
-                <div class="scroll-box" id="dexFeed">
-                    <div style="text-align:center; padding:20px; color:#8b949e">Scanning Solana/Base Pools...</div>
-                </div>
+                <div class="header"><span>🦄 ON-CHAIN GEMS</span><button class="btn" onclick="fetchDex()">↻</button></div>
+                <div style="overflow-y:auto" id="dexFeed"></div>
             </div>
-
         </div>
 
         <div class="panel">
             <div class="header">
-                <span>MARKET OVERVIEW</span>
-                <div style="display:flex; gap:10px">
-                    <button class="btn" onclick="filter='ALL'; renderTable()">All</button>
-                    <button class="btn" onclick="filter='BUY'; renderTable()">Strong Buys</button>
-                </div>
+                <span>LIVE MARKET (BINANCE STREAM)</span>
+                <span class="live-dot"></span>
             </div>
-            <div class="scroll-box">
+            <div style="overflow-y:auto; flex:1">
                 <table id="mainTable">
                     <thead>
                         <tr>
                             <th>Asset</th>
-                            <th>Price</th>
+                            <th>Price (Live)</th>
                             <th>24h %</th>
-                            <th>Long/Short Ratio</th>
-                            <th>Whale Flow</th>
-                            <th>Signal</th>
+                            <th>High/Low</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -109,33 +86,19 @@
         </div>
 
         <div class="sidebar-right" style="display:flex; flex-direction:column; gap:15px">
-            
             <div class="panel" style="height: 500px">
-                <div class="header">
-                    <span>🚨 INSTITUTIONAL WHALES</span>
-                    <span style="font-size:10px; color:#8b949e">>$100k Trades</span>
-                </div>
-                <div class="scroll-box" id="whaleFeed" style="font-family:monospace;"></div>
+                <div class="header"><span>🚨 WHALE STREAM</span><span class="live-dot"></span></div>
+                <div style="overflow-y:auto" id="whaleFeed"></div>
             </div>
-
-            <div class="panel" style="height: 285px">
-                <div class="header"><span>📊 MARKET SENTIMENT</span></div>
-                <div style="padding:15px">
-                    <div style="font-size:12px; color:#8b949e; margin-bottom:5px">FEAR & GREED INDEX</div>
-                    <div id="fgValue" style="font-size:24px; font-weight:bold; margin-bottom:15px">--</div>
-                    
-                    <div style="font-size:12px; color:#8b949e; margin-bottom:5px">GLOBAL LONG/SHORT RATIO</div>
-                    <div id="lsValue" style="font-size:24px; font-weight:bold">--</div>
-                    <div class="ls-bar"><div class="ls-fill" id="lsFill" style="width:50%"></div></div>
-                    <div class="ls-label"><span>Longs</span><span>Shorts</span></div>
-                    
-                    <div style="margin-top:20px; font-size:11px; color:#58a6ff; line-height:1.4">
-                        <b>PRO TIP:</b> If Long/Short Ratio is > 2.5, expect a crash (Long Squeeze). If < 0.8, expect a pump.
-                    </div>
+            <div class="panel" style="height: 285px; padding:15px">
+                <div style="font-size:12px; color:#8b949e">MARKET SENTIMENT</div>
+                <div id="fgValue" style="font-size:30px; font-weight:bold; margin-bottom:10px">--</div>
+                <div style="height:6px; background:#30363d; border-radius:3px; overflow:hidden"><div id="fgFill" style="width:50%; height:100%; background:#8b949e"></div></div>
+                <div style="margin-top:20px; font-size:12px; color:#58a6ff">
+                    Data Source: Binance WebSocket (Real-Time) + CoinGecko (Meta)
                 </div>
             </div>
         </div>
-
     </div>
 
     <div id="chartModal">
@@ -149,181 +112,183 @@
     </div>
 
     <script>
-        // CONFIG
-        const WHALE_THRESHOLD = 100000; // $100k+
-        let marketData = [];
-        let filter = 'ALL';
-        let socket = null;
+        // --- 1. CONFIG ---
+        const COINS = [
+            "BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "ADA", "AVAX", 
+            "TRX", "DOT", "LINK", "MATIC", "LTC", "SHIB", "UNI", "ATOM", 
+            "XLM", "ETC", "FIL", "HBAR", "APT", "ARB", "OP", "NEAR", "QNT"
+        ];
+        // Map simplified symbol to Binance Stream ID
+        const STREAM_PAIRS = COINS.map(s => s.toLowerCase() + "usdt").join('/');
+        
+        let coinMeta = {}; // Store names/images from CoinGecko
 
-        // --- 1. ARBITRAGE ENGINE ---
-        // Simulates finding price diffs between Binance and "Other Exchanges"
-        function scanArbitrage(coins) {
-            const box = document.getElementById('arbFeed');
-            box.innerHTML = "";
+        // --- 2. INIT: Get Static Data Once ---
+        async function init() {
+            try {
+                // Get Fear & Greed
+                fetch('https://api.alternative.me/fng/').then(r=>r.json()).then(d=>{
+                    const v = d.data[0].value;
+                    document.getElementById('fgValue').innerText = v;
+                    document.getElementById('fgFill').style.width = v+'%';
+                    document.getElementById('fgFill').style.background = v>50 ? '#2ea043' : '#ff7b72';
+                });
+
+                // Get On-Chain Gems
+                fetchDex();
+
+                // Get Coin Meta (Images/Names) - ONE CALL ONLY
+                const ids = "bitcoin,ethereum,solana,binancecoin,ripple,dogecoin,cardano,avalanche-2,tron,polkadot,chainlink,matic-network,litecoin,shiba-inu,uniswap,cosmos,stellar,ethereum-classic,filecoin,hedera-hashgraph,aptos,arbitrum,optimism,near,quant-network";
+                const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc`);
+                const data = await res.json();
+                
+                data.forEach(c => {
+                    coinMeta[c.symbol.toUpperCase()] = { name: c.name, image: c.image };
+                });
+
+                // Render Empty Table Rows (Placeholders)
+                const tbody = document.getElementById('tableBody');
+                COINS.forEach(sym => {
+                    const row = document.createElement('tr');
+                    row.id = `row-${sym}`;
+                    row.onclick = () => openChart(sym);
+                    row.innerHTML = `
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px">
+                                <img src="${coinMeta[sym]?.image || ''}" style="width:20px; border-radius:50%">
+                                <b>${sym}</b>
+                            </div>
+                        </td>
+                        <td id="price-${sym}">...</td>
+                        <td id="chg-${sym}">...</td>
+                        <td id="hl-${sym}" style="font-size:10px; color:#8b949e">...</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // START THE FAST SOCKET
+                startBinanceSocket();
+                startWhaleSocket();
+                startArbSim();
+
+            } catch(e) { console.log(e); }
+        }
+
+        // --- 3. BINANCE WEBSOCKET (THE SPEED ENGINE) ---
+        function startBinanceSocket() {
+            // Subscribe to !miniTicker for ALL assets (Very Efficient)
+            const ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
             
-            // We take top coins and simulate slight price variations for the demo
-            // In a real backend app, you'd fetch from CCXT (Binance, Kraken, Coinbase)
-            const opportunities = coins.slice(0, 10).map(c => {
-                const spread = (Math.random() * 0.5); // Simulate 0% to 0.5% spread
-                const direction = Math.random() > 0.5 ? "Binance -> Coinbase" : "Kraken -> Binance";
-                return { symbol: c.symbol, spread, direction };
-            }).filter(o => o.spread > 0.15); // Only show > 0.15% profit
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                data.forEach(ticker => {
+                    const symbol = ticker.s.replace('USDT', '');
+                    if (!COINS.includes(symbol)) return; // Filter only our list
 
-            if(opportunities.length === 0) {
-                box.innerHTML = `<div style="text-align:center; padding:20px; color:#8b949e">No spreads > 0.15% found.</div>`;
-            }
+                    // Update DOM directly (No Re-renders, High Perf)
+                    const priceCell = document.getElementById(`price-${symbol}`);
+                    const chgCell = document.getElementById(`chg-${symbol}`);
+                    const hlCell = document.getElementById(`hl-${symbol}`);
+                    const row = document.getElementById(`row-${symbol}`);
 
-            opportunities.forEach(op => {
+                    if(priceCell) {
+                        const oldPrice = parseFloat(priceCell.innerText.replace('$',''));
+                        const newPrice = parseFloat(ticker.c);
+                        
+                        priceCell.innerText = `$${newPrice < 1 ? newPrice.toFixed(4) : newPrice.toFixed(2)}`;
+                        
+                        // Flash Effect
+                        if(oldPrice && newPrice > oldPrice) row.classList.add('flash-green');
+                        if(oldPrice && newPrice < oldPrice) row.classList.add('flash-red');
+                        setTimeout(() => row.classList.remove('flash-green', 'flash-red'), 500);
+
+                        // Percent Color
+                        const chg = parseFloat(ticker.P); // 24h Change Not Provided in miniTicker properly sometimes, calculating diff usually better but P is usually change percent
+                        // Binance miniTicker 'P' is not percent change, it is price change. 
+                        // Actually miniTicker Object: c=close, o=open, h=high, l=low. 
+                        // Percent = (close - open) / open * 100
+                        const openPrice = parseFloat(ticker.o);
+                        const pct = ((newPrice - openPrice) / openPrice) * 100;
+
+                        chgCell.innerText = `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
+                        chgCell.className = pct >= 0 ? 'green-txt' : 'red-txt';
+
+                        hlCell.innerText = `H: ${parseFloat(ticker.h).toFixed(2)} / L: ${parseFloat(ticker.l).toFixed(2)}`;
+                    }
+                });
+            };
+        }
+
+        // --- 4. WHALE SOCKET ---
+        function startWhaleSocket() {
+            // Separate stream for specific big movements
+            const ws = new WebSocket(`wss://stream.binance.com:9443/ws/btcusdt@trade/ethusdt@trade/solusdt@trade`);
+            const feed = document.getElementById('whaleFeed');
+            
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                const usd = parseFloat(d.p) * parseFloat(d.q);
+                if(usd > 50000) { // $50k filter
+                    const side = d.m ? 'SELL' : 'BUY';
+                    const color = side === 'BUY' ? 'green-txt' : 'red-txt';
+                    const div = document.createElement('div');
+                    div.className = 'whale-item';
+                    div.innerHTML = `
+                        <div><b>${d.s.replace('USDT','')}</b></div>
+                        <div class="${color}">$${Math.floor(usd/1000)}k</div>
+                        <div style="font-size:10px; color:#8b949e">${side}</div>
+                    `;
+                    feed.prepend(div);
+                    if(feed.childElementCount > 30) feed.lastChild.remove();
+                }
+            };
+        }
+
+        // --- 5. EXTRAS ---
+        async function fetchDex() {
+            const feed = document.getElementById('dexFeed');
+            try {
+                const r = await fetch('https://api.coingecko.com/api/v3/search/trending');
+                const d = await r.json();
+                feed.innerHTML = d.coins.slice(0,7).map(c => `
+                    <div class="dex-item" onclick="window.open('https://www.coingecko.com/en/coins/${c.item.id}')">
+                        <div>
+                            <img src="${c.item.small}" style="width:15px; border-radius:50%; vertical-align:middle">
+                            <b>${c.item.symbol}</b>
+                        </div>
+                        <div style="color:#e3b341">#${c.item.market_cap_rank}</div>
+                    </div>
+                `).join('');
+            } catch(e) { feed.innerHTML = "API Limit"; }
+        }
+
+        function startArbSim() {
+            const box = document.getElementById('arbFeed');
+            // Simulate arb updates
+            setInterval(() => {
+                const coins = ['BTC', 'ETH', 'SOL'];
+                const coin = coins[Math.floor(Math.random()*coins.length)];
+                const spread = (Math.random() * 0.4 + 0.1).toFixed(2);
                 const div = document.createElement('div');
                 div.className = 'arb-row';
                 div.innerHTML = `
-                    <div><b>${op.symbol}</b> <span style="color:#8b949e; font-size:10px">(${op.direction})</span></div>
-                    <div class="arb-profit">+${op.spread.toFixed(2)}%</div>
+                    <div><b>${coin}</b> <span style="font-size:10px; color:#8b949e">Binance > Coinbase</span></div>
+                    <div class="green-txt">+${spread}%</div>
                 `;
-                box.appendChild(div);
-            });
+                box.prepend(div);
+                if(box.childElementCount > 10) box.lastChild.remove();
+            }, 3000);
         }
 
-        // --- 2. DEX GEM HUNTER (GeckoTerminal API) ---
-        async function fetchDexGems() {
-            const box = document.getElementById('dexFeed');
-            box.innerHTML = `<div style="text-align:center; padding:20px; color:#8b949e">Scanning On-Chain...</div>`;
-            
-            try {
-                // Fetch trending pools from GeckoTerminal (Free API)
-                const res = await fetch('https://api.coingecko.com/api/v3/search/trending');
-                const data = await res.json();
-                
-                box.innerHTML = "";
-                data.coins.slice(0, 8).forEach(coin => {
-                    const div = document.createElement('div');
-                    div.className = 'dex-item';
-                    div.onclick = () => window.open(`https://www.geckoterminal.com/`, '_blank');
-                    div.innerHTML = `
-                        <div class="dex-name">💎 ${coin.item.name} <span style="color:#8b949e">(${coin.item.symbol})</span></div>
-                        <div class="dex-meta">
-                            <span>Rank #${coin.item.market_cap_rank || 'N/A'}</span>
-                            <span>${coin.item.data.price_change_percentage_24h.usd.toFixed(1)}%</span>
-                        </div>
-                    `;
-                    box.appendChild(div);
-                });
-            } catch(e) { box.innerHTML = "API Rate Limit. Retrying..."; }
-        }
-
-        // --- 3. LONG/SHORT RATIO (Binance Futures) ---
-        async function fetchLongShortRatio() {
-            try {
-                const res = await fetch('https://fapi.binance.com/fapi/v1/globalLongShortAccountRatio?symbol=BTCUSDT&period=1d');
-                const data = await res.json();
-                const ratio = parseFloat(data[data.length-1].longShortRatio);
-                
-                document.getElementById('lsValue').innerText = ratio.toFixed(2);
-                
-                // Calculate percentage bar
-                const longPct = (ratio / (ratio + 1)) * 100;
-                document.getElementById('lsFill').style.width = `${longPct}%`;
-                
-                if(ratio > 2) document.getElementById('lsValue').style.color = "#ff7b72"; // Bearish (Overcrowded longs)
-                else if(ratio < 0.8) document.getElementById('lsValue').style.color = "#2ea043"; // Bullish (Short squeeze likely)
-                else document.getElementById('lsValue').style.color = "#c9d1d9";
-
-            } catch(e) { console.log("L/S Error"); }
-        }
-
-        // --- 4. MAIN DATA LOOP ---
-        async function init() {
-            fetchDexGems();
-            fetchLongShortRatio();
-            
-            try {
-                // Get Fear & Greed
-                const fngRes = await fetch('https://api.alternative.me/fng/');
-                const fngData = await fngRes.json();
-                document.getElementById('fgValue').innerText = fngData.data[0].value;
-
-                // Get Market Data
-                const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1&sparkline=false');
-                marketData = await res.json();
-                
-                scanArbitrage(marketData);
-                renderTable();
-                startSocket(marketData);
-            } catch(e) { setTimeout(init, 5000); }
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
-            
-            marketData.forEach(coin => {
-                // Logic: Simple Trend Signal
-                let signal = "NEUTRAL";
-                let color = "#8b949e";
-                if(coin.price_change_percentage_24h > 5) { signal = "STRONG BUY"; color = "#2ea043"; }
-                if(coin.price_change_percentage_24h < -5) { signal = "STRONG SELL"; color = "#ff7b72"; }
-                
-                if(filter === 'BUY' && !signal.includes('BUY')) return;
-
-                const row = document.createElement('tr');
-                row.onclick = () => openChart(coin.symbol.toUpperCase());
-                row.innerHTML = `
-                    <td>
-                        <div style="display:flex; align-items:center; gap:8px">
-                            <img src="${coin.image}" style="width:20px; border-radius:50%">
-                            <b>${coin.symbol.toUpperCase()}</b>
-                        </div>
-                    </td>
-                    <td>$${coin.current_price.toLocaleString()}</td>
-                    <td class="${coin.price_change_percentage_24h>=0?'green-txt':'red-txt'}">${coin.price_change_percentage_24h.toFixed(2)}%</td>
-                    <td><div class="ls-bar" style="width:60px; margin:0 auto"><div class="ls-fill" style="width:${Math.random()*100}%"></div></div></td>
-                    <td>${(Math.random()*10).toFixed(1)}M</td>
-                    <td style="color:${color}; font-weight:bold">${signal}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // --- 5. CHART & SOCKET ---
         function openChart(symbol) {
             document.getElementById('chartModal').style.display = 'flex';
-            document.getElementById('chartTitle').innerText = `${symbol} CHART`;
             document.getElementById('chartContainer').innerHTML = `
                 <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=BINANCE:${symbol}USDT&interval=60&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC" 
                 style="width:100%; height:100%; border:none;"></iframe>`;
         }
 
-        function startSocket(coins) {
-            if(socket) socket.close();
-            const streams = coins.map(c => `${c.symbol.toLowerCase()}usdt@trade`).join('/');
-            socket = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
-            
-            const feed = document.getElementById('whaleFeed');
-            socket.onmessage = (e) => {
-                const data = JSON.parse(e.data).data;
-                const usd = parseFloat(data.p) * parseFloat(data.q);
-                if(usd > WHALE_THRESHOLD) {
-                    const type = data.m ? 'SELL' : 'BUY'; // data.m=true is sell
-                    const color = type === 'BUY' ? 'green-txt' : 'red-txt';
-                    const div = document.createElement('div');
-                    div.style.padding = "8px";
-                    div.style.borderBottom = "1px solid #30363d";
-                    div.style.fontSize = "12px";
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between">
-                            <b style="color:#e3b341">${data.s.replace('USDT','')}</b>
-                            <span class="${color}">$${Math.floor(usd/1000)}k</span>
-                        </div>
-                        <div style="color:#8b949e; font-size:10px">${type} @ $${parseFloat(data.p).toFixed(2)}</div>
-                    `;
-                    feed.prepend(div);
-                    if(feed.children.length > 30) feed.removeChild(feed.lastChild);
-                }
-            };
-        }
-
         init();
-        setInterval(init, 60000);
     </script>
 </body>
 </html>
