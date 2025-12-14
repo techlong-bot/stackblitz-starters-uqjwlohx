@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Whale Signal Tracker</title>
+    <title>Whale Signal Terminal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
@@ -10,160 +10,234 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 10px;
+            overflow-x: hidden;
         }
 
-        h1 { text-align: center; margin-bottom: 20px; color: #58a6ff; }
+        h1 { text-align: center; margin-bottom: 20px; color: #58a6ff; font-size: 24px; }
 
-        .container {
-            max-width: 800px;
+        /* LAYOUT: Two columns on big screens, one on phone */
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
             margin: 0 auto;
+        }
+
+        .panel {
             background-color: #161b22;
-            padding: 10px;
+            padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            overflow-x: auto;
+            flex: 1;
+            min-width: 300px;
+            border: 1px solid #30363d;
         }
 
-        /* BUTTONS */
-        .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .panel-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- LEFT PANEL: COIN LIST --- */
+        .controls { display: flex; gap: 10px; margin-bottom: 10px; }
+        button { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-all { background-color: #30363d; color: white; }
         .btn-buy { background-color: #2ea043; color: white; }
         
-        /* TABLE */
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th { text-align: right; padding: 15px; border-bottom: 1px solid #30363d; color: #8b949e; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: right; padding: 10px; color: #8b949e; font-size: 12px; }
         th:first-child { text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid #21262d; vertical-align: middle; text-align: right; }
+        td { padding: 10px; border-bottom: 1px solid #21262d; vertical-align: middle; text-align: right; font-size: 14px; }
         td:first-child { text-align: left; }
 
-        .coin-info { display: flex; align-items: center; gap: 10px; }
-        .coin-icon { width: 30px; height: 30px; border-radius: 50%; }
+        .coin-info { display: flex; align-items: center; gap: 8px; }
+        .coin-icon { width: 24px; height: 24px; border-radius: 50%; }
+        .signal-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; white-space: nowrap; }
+
+        /* --- RIGHT PANEL: WHALE FEED --- */
+        #whaleFeed {
+            height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .feed-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #21262d;
+            font-size: 13px;
+            animation: flash 0.5s;
+        }
+
+        .feed-buy { border-left: 3px solid #2ea043; background: rgba(46, 160, 67, 0.1); }
+        .feed-sell { border-left: 3px solid #ff7b72; background: rgba(255, 123, 114, 0.1); }
         
-        .signal-badge { padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 12px; white-space: nowrap; }
+        .whale-amount { font-weight: bold; color: #e6edf3; }
+        .whale-usd { color: #8b949e; font-size: 11px; }
+
         .green-text { color: #2ea043; }
         .red-text { color: #ff7b72; }
+        
+        @keyframes flash {
+            0% { background-color: #58a6ff44; }
+            100% { background-color: transparent; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>🐋 Whale Signal Tracker</h1>
+    <h1>🐋 Whale Signal Terminal</h1>
 
-        <div class="controls">
-            <button class="btn-all" onclick="filterTable('ALL')">Show All</button>
-            <button class="btn-buy" onclick="filterTable('BUY')">Buy Signals Only</button>
-        </div>
+    <div class="main-layout">
         
-        <table id="cryptoTable">
-            <thead>
-                <tr>
-                    <th>Asset</th>
-                    <th>Price</th>
-                    <th>24h %</th>
-                    <th>Signal</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="4" style="text-align:center; padding: 20px;">Fetching live data...</td></tr>
-            </tbody>
-        </table>
+        <div class="panel">
+            <div class="panel-header">
+                <span>Scanner (Top 25)</span>
+                <div class="controls">
+                    <button class="btn-all" onclick="filterTable('ALL')">All</button>
+                    <button class="btn-buy" onclick="filterTable('BUY')">Buys</button>
+                </div>
+            </div>
+            
+            <table id="cryptoTable">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Price</th>
+                        <th>Signal</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="3" style="text-align:center">Loading scanner...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span>🚨 Live Whale Trades (BTC/ETH)</span>
+                <span style="font-size:12px; color: #2ea043">● Live</span>
+            </div>
+            <div id="whaleFeed">
+                <div style="text-align:center; padding:20px; color:#8b949e">
+                    Waiting for transactions > $50,000...
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
+        // --- PART 1: MARKET SCANNER (CoinGecko) ---
         let currentFilter = 'ALL';
         let marketData = [];
 
-        // This runs ON YOUR PHONE/COMPUTER, bypassing Render's IP block
-        async function loadData() {
+        async function loadScannerData() {
             try {
-                // Fetch directly from CoinGecko
+                // Fetch directly from CoinGecko (Client Side)
                 const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=25&page=1&sparkline=false');
+                if (!response.ok) return; // Silent fail if blocked
                 
-                if (!response.ok) throw new Error("Connection failed");
                 const coins = await response.json();
 
-                // Process the data locally
                 marketData = coins.map(coin => {
                     const priceChange = coin.price_change_percentage_24h;
                     let signal = "NEUTRAL";
                     let signalColor = "gray";
 
-                    if (priceChange < -2.0) {
-                        signal = "BUY THE DIP";
-                        signalColor = "#00ff00"; 
-                    } else if (priceChange > 2.0) {
-                        signal = "TAKE PROFIT";
-                        signalColor = "#ff4d4d"; 
-                    }
+                    if (priceChange < -2.0) { signal = "BUY DIP"; signalColor = "#2ea043"; } 
+                    else if (priceChange > 2.0) { signal = "SELL TOP"; signalColor = "#ff7b72"; }
 
                     return {
-                        name: coin.name,
                         symbol: coin.symbol.toUpperCase(),
                         price: coin.current_price,
-                        change24h: priceChange,
+                        change: priceChange,
                         image: coin.image,
                         signal: signal,
                         signalColor: signalColor
                     };
                 });
-
                 renderTable();
-
-            } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('tableBody').innerHTML = 
-                    `<tr><td colspan="4" style="text-align:center; color:#ff7b72;">
-                        ⚠️ Failed to load. Too many refreshes.<br>Wait 30 seconds and try again.
-                    </td></tr>`;
-            }
+            } catch (error) { console.log("Scanner waiting..."); }
         }
 
         function renderTable() {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = ""; 
-
-            const filteredData = marketData.filter(coin => {
-                if (currentFilter === 'BUY') return coin.signal.includes('BUY');
-                return true;
-            });
-
-            filteredData.forEach(coin => {
-                const changeColor = coin.change24h >= 0 ? 'green-text' : 'red-text';
-                const changeSign = coin.change24h >= 0 ? '+' : '';
-
+            const filtered = marketData.filter(c => currentFilter === 'BUY' ? c.signal.includes('BUY') : true);
+            
+            filtered.forEach(coin => {
                 const row = `
                     <tr>
                         <td>
                             <div class="coin-info">
                                 <img src="${coin.image}" class="coin-icon">
                                 <b>${coin.symbol}</b>
+                                <span style="font-size:11px" class="${coin.change >= 0 ? 'green-text' : 'red-text'}">
+                                    ${coin.change.toFixed(1)}%
+                                </span>
                             </div>
                         </td>
                         <td>$${coin.price.toLocaleString()}</td>
-                        <td class="${changeColor}">${changeSign}${coin.change24h.toFixed(2)}%</td>
-                        <td>
-                            <span class="signal-badge" style="background-color: ${coin.signalColor}; color: ${coin.signalColor === '#00ff00' ? 'black' : 'white'}">
-                                ${coin.signal}
-                            </span>
-                        </td>
-                    </tr>
-                `;
+                        <td><span class="signal-badge" style="background:${coin.signalColor}; color:white">${coin.signal}</span></td>
+                    </tr>`;
                 tableBody.innerHTML += row;
             });
         }
-
-        function filterTable(type) {
-            currentFilter = type;
-            renderTable();
-        }
-
-        // Run once on load
-        loadData();
         
-        // Refresh every 30 seconds (don't do it too fast or your phone gets blocked!)
-        setInterval(loadData, 30000); 
-    </script>
+        // --- PART 2: LIVE WHALE WEBSOCKET (Binance) ---
+        const whaleFeed = document.getElementById('whaleFeed');
+        const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade/ethusdt@trade');
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const price = parseFloat(data.p);
+            const quantity = parseFloat(data.q);
+            const totalUsd = price * quantity;
+            const isBuyerMaker = data.m; // If true, maker was buyer (so it's a SELL). If false, it's a BUY.
+            const type = isBuyerMaker ? 'SELL' : 'BUY'; 
 
+            // FILTER: Only show trades larger than $50,000 USD
+            if (totalUsd > 50000) {
+                const coin = data.s === 'BTCUSDT' ? 'BTC' : 'ETH';
+                const colorClass = type === 'BUY' ? 'feed-buy' : 'feed-sell';
+                const icon = type === 'BUY' ? '🚀' : '🔻';
+                
+                const item = document.createElement('div');
+                item.className = `feed-item ${colorClass}`;
+                item.innerHTML = `
+                    <div>
+                        <div class="whale-amount">${icon} ${type} ${quantity.toFixed(2)} ${coin}</div>
+                        <div class="whale-usd">Price: $${price.toLocaleString()}</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="whale-amount">$${Math.floor(totalUsd).toLocaleString()}</div>
+                        <div class="whale-usd">Whale Alert</div>
+                    </div>
+                `;
+                
+                whaleFeed.prepend(item);
+                
+                // Keep list clean (max 50 items)
+                if (whaleFeed.children.length > 50) {
+                    whaleFeed.removeChild(whaleFeed.lastChild);
+                }
+            }
+        };
+
+        // Initialize
+        loadScannerData();
+        setInterval(loadScannerData, 30000); // Update scanner every 30s
+        function filterTable(t) { currentFilter = t; renderTable(); }
+
+    </script>
 </body>
 </html>
