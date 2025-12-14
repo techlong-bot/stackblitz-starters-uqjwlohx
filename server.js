@@ -6,56 +6,48 @@ app.use(express.static('public'));
 
 app.get('/market-data', async (req, res) => {
     try {
-        // 1. Get real coin data AND price change
-        const response = await axios.get(
-            'https://api.coingecko.com/api/v3/coins/markets', 
-            {
-                params: {
-                    vs_currency: 'usd',
-                    order: 'market_cap_desc',
-                    per_page: 25,
-                    page: 1,
-                    sparkline: false
-                }
-            }
-        );
+        // 1. Get 24hr Ticker data from Binance (Public API, no key needed)
+        const response = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
+        const allCoins = response.data;
 
-        const coins = response.data;
+        // 2. Filter & Sort the data
+        // - We only want pairs ending in 'USDT' (like BTCUSDT)
+        // - We sort by 'quoteVolume' to get the most traded coins (Top 25)
+        const topCoins = allCoins
+            .filter(coin => coin.symbol.endsWith('USDT'))
+            .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+            .slice(0, 25);
 
-        // 2. The Logic: React to REAL price changes
-        const enrichedData = coins.map(coin => {
-            const priceChange = coin.price_change_percentage_24h;
+        // 3. Process the data for our website
+        const enrichedData = topCoins.map(coin => {
+            // Clean up symbol: "BTCUSDT" -> "BTC"
+            const shortSymbol = coin.symbol.replace('USDT', '');
+            const priceChange = parseFloat(coin.priceChangePercent);
             
-            // Default values
-            let netflow = 0; // Simulated whale movement
+            // LOGIC: Same Smart Signal Logic
+            let netflow = 0;
             let signal = "NEUTRAL";
             let signalColor = "gray";
 
-            // If price crashed more than 2% -> Whales are Buying the Dip!
-            if (priceChange < -2.0) {
+            if (priceChange < -2.5) {
                 signal = "BUY THE DIP";
                 signalColor = "#00ff00"; // Green
-                // Simulate Negative Netflow (Outflow)
                 netflow = Math.floor(Math.random() * -500) - 200; 
-            }
-            // If price pumped more than 2% -> Whales are Selling Top!
-            else if (priceChange > 2.0) {
+            } else if (priceChange > 2.5) {
                 signal = "TAKE PROFIT";
                 signalColor = "#ff4d4d"; // Red
-                // Simulate Positive Netflow (Inflow)
                 netflow = Math.floor(Math.random() * 500) + 200; 
-            }
-            // If market is flat (-2% to 2%) -> Random noise
-            else {
+            } else {
                 netflow = Math.floor(Math.random() * 200) - 100;
             }
 
             return {
-                name: coin.name,
-                symbol: coin.symbol.toUpperCase(),
-                price: coin.current_price,
-                change24h: priceChange, // We send this to the frontend now
-                image: coin.image,
+                name: shortSymbol, // Binance doesn't give full names, so we use BTC, ETH, etc.
+                symbol: coin.symbol, // BTCUSDT
+                price: parseFloat(coin.lastPrice),
+                change24h: priceChange,
+                // Trick to get coin icons using the symbol name
+                image: `https://assets.coincap.io/assets/icons/${shortSymbol.toLowerCase()}@2x.png`,
                 netflow: netflow,
                 signal: signal,
                 signalColor: signalColor
@@ -65,11 +57,11 @@ app.get('/market-data', async (req, res) => {
         res.json(enrichedData);
 
     } catch (error) {
-        console.error("Error fetching data:", error.message);
+        console.error("Error fetching Binance data:", error.message);
         res.status(500).json({ error: "Failed to fetch data" });
     }
 });
 
 app.listen(3000, () => {
-    console.log("Server running...");
+    console.log("Connected to Binance API. Server running...");
 });
