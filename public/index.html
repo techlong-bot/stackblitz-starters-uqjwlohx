@@ -2,21 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pionex Pro | Login</title>
+    <title>ENGINE | Terminal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #0b0e11;
-            --bg-panel: #161a1e;
-            --bg-input: #2b3139;
-            --border-color: #252b36;
-            --primary: #0d6efd;
-            --green: #0ecb81;
-            --red: #f6465d;
-            --text-main: #eaecef;
-            --text-muted: #848e9c;
-            --hover: #2a2e36;
+            /* ENGINE PALETTE */
+            --bg-body: #09090b;
+            --bg-panel: #121214;
+            --bg-input: #1c1c1f;
+            --border: #27272a;
+            --primary: #ededed;
+            --accent: #3b82f6; /* Blue */
+            --green: #22c55e;
+            --red: #ef4444;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --hover: #27272a;
         }
 
         * { box-sizing: border-box; }
@@ -33,7 +35,7 @@
             font-size: 13px;
         }
 
-        /* --- AUTH SCREEN STYLES --- */
+        /* --- 1. AUTH SCREEN --- */
         #authScreen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-body);
@@ -41,444 +43,438 @@
             display: flex; justify-content: center; align-items: center;
         }
         .auth-card {
-            width: 400px;
+            width: 380px;
             background: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-        .auth-logo { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
-        .auth-logo span { color: var(--primary); }
+        .auth-logo { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 25px; letter-spacing: -1px; }
         
-        .auth-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
-        .auth-tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent; }
-        .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        .auth-tabs { display: flex; background: var(--bg-input); padding: 4px; border-radius: 8px; margin-bottom: 20px; }
+        .auth-tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; color: var(--text-muted); font-weight: 500; border-radius: 6px; font-size: 12px; transition: 0.2s; }
+        .auth-tab.active { background: var(--bg-panel); color: var(--text-main); shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        .auth-input-group { margin-bottom: 15px; }
-        .auth-label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 12px; }
-        .auth-input { width: 100%; padding: 12px; background: var(--bg-body); border: 1px solid var(--border-color); color: white; border-radius: 4px; font-size: 14px; }
-        .auth-input:focus { border-color: var(--primary); outline: none; }
+        .auth-input { width: 100%; padding: 10px; background: var(--bg-body); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
+        .auth-input:focus { border-color: var(--accent); outline: none; }
         
-        .auth-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 10px; }
-        .auth-btn:hover { background: #0b5ed7; }
+        .auth-btn { width: 100%; padding: 10px; background: var(--text-main); color: black; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 5px; }
+        .auth-btn:hover { opacity: 0.9; }
         
-        .auth-footer { margin-top: 20px; text-align: center; font-size: 12px; color: var(--text-muted); }
+        .guest-btn { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 12px; }
+        .guest-btn:hover { border-color: var(--text-muted); color: var(--text-main); }
 
-        /* --- APP STYLES (HIDDEN BY DEFAULT) --- */
+        /* --- 2. APP LAYOUT --- */
         #appScreen { display: none; height: 100%; flex-direction: column; }
         
-        /* HEADER */
-        .header { height: 50px; background: var(--bg-panel); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
-        .logo-area { display: flex; align-items: center; gap: 10px; }
-        .logo-text { font-weight: 700; font-size: 16px; }
-        .logo-badge { background: #3d4552; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+        .header { height: 48px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .logo-text { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 18px; letter-spacing: -1px; }
         
         .user-nav { display: flex; gap: 15px; align-items: center; }
-        .wallet-display { background: var(--bg-input); padding: 6px 12px; border-radius: 4px; font-weight: 600; }
-        .logout-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        .logout-btn:hover { border-color: var(--red); color: var(--red); }
+        .wallet-pill { background: var(--bg-input); padding: 4px 10px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        .logout-link { color: var(--text-muted); cursor: pointer; font-size: 11px; text-decoration: underline; }
 
-        /* GRID LAYOUT */
-        .workspace { display: grid; grid-template-columns: 280px 1fr 320px; grid-template-rows: 1fr 250px; flex: 1; overflow: hidden; }
+        .workspace { display: grid; grid-template-columns: 260px 1fr 320px; grid-template-rows: 1fr 280px; flex: 1; overflow: hidden; }
 
         /* LEFT SIDEBAR */
-        .market-sidebar { grid-row: 1 / -1; background: var(--bg-panel); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
-        .search-box { padding: 10px; border-bottom: 1px solid var(--border-color); }
-        .search-input { width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); padding: 8px; color: white; border-radius: 4px; font-size: 12px; }
+        .market-sidebar { grid-row: 1 / -1; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .search-box { padding: 10px; border-bottom: 1px solid var(--border); }
         .market-list { overflow-y: auto; flex: 1; }
-        .market-item { display: flex; justify-content: space-between; padding: 10px 12px; cursor: pointer; transition: 0.1s; }
+        .market-item { display: flex; justify-content: space-between; padding: 8px 15px; cursor: pointer; border-bottom: 1px solid transparent; }
         .market-item:hover { background: var(--hover); }
-        .market-item.active { background: #2b3139; border-left: 3px solid var(--primary); }
-        .coin-name { font-weight: 600; color: #d1d5da; }
-        .coin-vol { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .market-item.active { background: #1f1f22; border-left: 2px solid var(--text-main); }
+        
+        /* CENTER CHART */
+        .chart-section { grid-column: 2; grid-row: 1; background: var(--bg-body); display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .ticker-bar { height: 45px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 15px; background: var(--bg-panel); }
+        .ticker-price { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--green); }
 
-        /* CHART */
-        .chart-section { grid-column: 2; grid-row: 1; background: var(--bg-body); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
-        .ticker-bar { height: 50px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 20px; gap: 20px; background: var(--bg-panel); }
-        .ticker-price { font-size: 20px; font-weight: 600; color: var(--green); }
+        /* BOTTOM PANEL (TABS) */
+        .bottom-section { grid-column: 2; grid-row: 2; background: var(--bg-panel); border-top: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .panel-tabs { display: flex; border-bottom: 1px solid var(--border); background: #0e0e10; }
+        .p-tab { padding: 10px 20px; cursor: pointer; color: var(--text-muted); font-size: 12px; font-weight: 600; border-top: 2px solid transparent; }
+        .p-tab.active { color: var(--text-main); border-top-color: var(--accent); background: var(--bg-panel); }
+        
+        .panel-content { flex: 1; overflow-y: auto; padding: 0; position: relative; }
+        .tab-view { display: none; width: 100%; height: 100%; }
+        .tab-view.show { display: block; }
 
-        /* ORDERS */
-        .orders-section { grid-column: 2; grid-row: 2; background: var(--bg-panel); border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
-        .tabs { display: flex; border-bottom: 1px solid var(--border-color); background: #1e2329; }
-        .tab-btn { padding: 10px 20px; cursor: pointer; color: var(--text-muted); font-weight: 600; border-top: 2px solid transparent; }
-        .tab-btn.active { color: var(--primary); border-top: 2px solid var(--primary); background: var(--bg-panel); }
-        .orders-table-container { flex: 1; overflow-y: auto; }
-        .order-table { width: 100%; border-collapse: collapse; }
-        .order-table th { text-align: left; padding: 10px 15px; color: var(--text-muted); font-size: 11px; background: #1e2329; position: sticky; top: 0; }
-        .order-table td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-size: 12px; color: var(--text-main); }
-
-        /* RIGHT CONTROLS */
+        /* TABLES */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { text-align: left; padding: 8px 15px; color: var(--text-muted); font-size: 11px; background: #161618; position: sticky; top: 0; }
+        .data-table td { padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 12px; }
+        
+        /* RIGHT SIDEBAR (CONTROLS + FEEDS) */
         .control-sidebar { grid-column: 3; grid-row: 1 / -1; background: var(--bg-panel); display: flex; flex-direction: column; }
-        .ctrl-header { padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 14px; }
-        .strategy-card { margin: 15px; padding: 15px; background: #1e2530; border: 1px solid #2e384d; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .strategy-card:hover { border-color: var(--primary); }
-        .ai-tag { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; margin-left: 6px; }
         
-        .form-area { padding: 0 15px; flex: 1; overflow-y: auto; }
-        .input-group { margin-bottom: 15px; }
-        .input-label { display: block; color: var(--text-muted); font-size: 11px; margin-bottom: 6px; }
-        .input-field { width: 100%; background: var(--bg-body); border: 1px solid var(--border-color); padding: 10px; border-radius: 4px; color: white; font-family: inherit; }
-        
-        .btn-create { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-weight: 700; border-radius: 4px; cursor: pointer; margin-top: 10px; font-size: 14px; }
-        .btn-create:hover { background: #0b5ed7; }
-        .btn-stop { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 4px 10px; border-radius: 4px; cursor: pointer; }
-        .btn-stop:hover { border-color: var(--red); color: var(--red); }
+        /* RIGHT TABS */
+        .right-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 5px 10px; gap: 5px; }
+        .r-tab { flex: 1; text-align: center; padding: 6px; font-size: 11px; font-weight: 700; color: var(--text-muted); cursor: pointer; border-radius: 4px; }
+        .r-tab:hover { background: var(--bg-input); }
+        .r-tab.active { background: var(--bg-input); color: var(--text-main); }
 
-        .text-green { color: var(--green); }
-        .text-red { color: var(--red); }
-        .flex-between { display: flex; justify-content: space-between; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-body); }
-        ::-webkit-scrollbar-thumb { background: #3d4552; border-radius: 3px; }
+        /* RIGHT CONTENT */
+        .right-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        /* BOT FORM */
+        .form-area { padding: 15px; }
+        .input-group { margin-bottom: 12px; }
+        .input-label { display: block; color: var(--text-muted); font-size: 11px; margin-bottom: 4px; }
+        .input-field { width: 100%; background: var(--bg-body); border: 1px solid var(--border); padding: 8px; border-radius: 4px; color: white; font-family: inherit; }
+        .btn-action { width: 100%; background: var(--text-main); color: black; border: none; padding: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        
+        /* FEED ITEMS (WHALES/ARB) */
+        .feed-item { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 11px; font-family: 'JetBrains Mono', monospace; display: flex; justify-content: space-between; }
+        .feed-green { color: var(--green); } .feed-red { color: var(--red); }
+
+        .ai-card { margin: 15px; padding: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; cursor: pointer; }
+        
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
     </style>
 </head>
 <body>
 
     <div id="authScreen">
         <div class="auth-card">
-            <div class="auth-logo">PIONEX <span>PRO</span></div>
+            <div class="auth-logo">/// ENGINE</div>
             
             <div class="auth-tabs">
-                <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Log In</div>
-                <div class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</div>
+                <div class="auth-tab active" id="tLogin" onclick="authTab('login')">Login</div>
+                <div class="auth-tab" id="tSignup" onclick="authTab('signup')">Sign Up</div>
             </div>
 
             <div id="loginForm">
-                <div class="auth-input-group">
-                    <label class="auth-label">Email</label>
-                    <input type="email" id="loginEmail" class="auth-input" placeholder="user@example.com">
-                </div>
-                <div class="auth-input-group">
-                    <label class="auth-label">Password</label>
-                    <input type="password" id="loginPass" class="auth-input" placeholder="••••••••">
-                </div>
-                <button class="auth-btn" onclick="handleLogin()">Log In</button>
+                <input type="email" id="lEmail" class="auth-input" placeholder="Email">
+                <input type="password" id="lPass" class="auth-input" placeholder="Password">
+                <button class="auth-btn" onclick="login()">Enter Terminal</button>
             </div>
 
             <div id="signupForm" style="display:none">
-                <div class="auth-input-group">
-                    <label class="auth-label">Full Name</label>
-                    <input type="text" id="signName" class="auth-input" placeholder="John Doe">
-                </div>
-                <div class="auth-input-group">
-                    <label class="auth-label">Email</label>
-                    <input type="email" id="signEmail" class="auth-input" placeholder="user@example.com">
-                </div>
-                <div class="auth-input-group">
-                    <label class="auth-label">Create Password</label>
-                    <input type="password" id="signPass" class="auth-input" placeholder="••••••••">
-                </div>
-                <button class="auth-btn" onclick="handleSignup()">Create Account</button>
+                <input type="text" id="sName" class="auth-input" placeholder="Username">
+                <input type="email" id="sEmail" class="auth-input" placeholder="Email">
+                <input type="password" id="sPass" class="auth-input" placeholder="Password">
+                <button class="auth-btn" onclick="signup()">Create ID</button>
             </div>
 
-            <div class="auth-footer" id="authMsg">Secure Grid Trading Terminal</div>
+            <button class="guest-btn" onclick="guestLogin()">Continue as Guest (No Save)</button>
         </div>
     </div>
 
     <div id="appScreen">
         <div class="header">
-            <div class="logo-area">
-                <span class="logo-text">PIONEX</span>
-                <span class="logo-badge">PRO</span>
-            </div>
+            <div class="logo-text">/// ENGINE</div>
             <div class="user-nav">
-                <div class="wallet-display">
-                    <span style="color:#848e9c; font-weight:400">Balance:</span>
-                    <span id="walletBal">$10,000.00</span>
-                </div>
-                <div style="font-size:12px; font-weight:bold" id="userNameDisplay">User</div>
-                <button class="logout-btn" onclick="logout()">LOGOUT</button>
+                <div class="wallet-pill">USD: <span id="walletDisp">$10,000</span></div>
+                <div style="font-size:12px; font-weight:600" id="userDisp">Guest</div>
+                <div class="logout-link" onclick="logout()">Exit</div>
             </div>
         </div>
 
         <div class="workspace">
+            
             <div class="market-sidebar">
-                <div class="search-box"><input type="text" class="search-input" placeholder="Search Coin"></div>
+                <div class="search-box"><input type="text" class="auth-input" placeholder="Search..." style="margin:0; font-size:11px;"></div>
                 <div id="coinList" class="market-list"></div>
             </div>
 
             <div class="chart-section">
                 <div class="ticker-bar">
-                    <div style="font-size: 18px; font-weight:700" id="chartSymbol">BTC/USDT</div>
+                    <div style="font-weight:700" id="chartSymbol">BTC/USDT</div>
                     <div class="ticker-price" id="chartPrice">--</div>
-                    <div style="font-size:12px; font-weight:500" id="chartChange">--%</div>
+                    <div style="font-size:12px" id="chartChange">--%</div>
                 </div>
                 <div id="tv_chart" style="flex:1; width:100%;"></div>
             </div>
 
-            <div class="orders-section">
-                <div class="tabs"><div class="tab-btn active">Running Bots (Paper)</div></div>
-                <div class="orders-table-container">
-                    <table class="order-table">
-                        <thead><tr><th>Pair</th><th>Range</th><th>Invested</th><th>Grid Profit</th><th>Total PnL</th><th>Action</th></tr></thead>
-                        <tbody id="botList"></tbody>
-                    </table>
+            <div class="bottom-section">
+                <div class="panel-tabs">
+                    <div class="p-tab active" onclick="switchBottom('bots', this)">Active Bots</div>
+                    <div class="p-tab" onclick="switchBottom('dex', this)">💎 DEX Gems</div>
+                </div>
+                
+                <div class="panel-content">
+                    <div id="view-bots" class="tab-view show">
+                        <table class="data-table">
+                            <thead><tr><th>Pair</th><th>Range</th><th>Invested</th><th>PnL</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody id="botTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="view-dex" class="tab-view">
+                        <table class="data-table">
+                            <thead><tr><th>Coin</th><th>Price Change</th><th>Rank</th><th>Link</th></tr></thead>
+                            <tbody id="dexTableBody"><tr><td colspan="4" style="padding:20px; color:#555">Scanning Chain...</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <div class="control-sidebar">
-                <div class="ctrl-header">Create Grid Bot</div>
-                <div class="strategy-card" onclick="autoFillAI()">
-                    <div class="flex-between">
-                        <span style="font-weight:700; font-size:12px">AI Strategy <span class="ai-tag">AUTO</span></span>
-                        <span class="text-green" style="font-weight:700; font-size:12px">~124% APR</span>
+                <div class="right-tabs">
+                    <div class="r-tab active" onclick="switchRight('ctrl', this)">BOT</div>
+                    <div class="r-tab" onclick="switchRight('whale', this)">WHALE</div>
+                    <div class="r-tab" onclick="switchRight('arb', this)">ARB</div>
+                </div>
+
+                <div id="r-ctrl" class="right-content" style="display:flex">
+                    <div class="ai-card" onclick="fillAI()">
+                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700">
+                            <span>AI STRATEGY</span>
+                            <span style="color:var(--accent)">AUTO</span>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-muted); margin-top:5px">
+                            Range: <span id="aiRange">...</span><br>
+                            Est. APY: 124%
+                        </div>
                     </div>
-                    <div style="margin-top:8px; font-size:11px; color:var(--text-muted)">
-                        Range: <span id="aiRangeDisplay" style="color:var(--text-main)">...</span><br>
-                        Grids: <span id="aiGridDisplay" style="color:var(--text-main)">...</span>
+                    <div class="form-area">
+                        <div class="input-group"><label class="input-label">Low</label><input id="iLow" type="number" class="input-field"></div>
+                        <div class="input-group"><label class="input-label">High</label><input id="iHigh" type="number" class="input-field"></div>
+                        <div class="input-group"><label class="input-label">Grids</label><input id="iGrids" type="number" class="input-field"></div>
+                        <div class="input-group"><label class="input-label">Amount</label><input id="iAmt" type="number" class="input-field"></div>
+                        <button class="btn-action" onclick="createBot()">LAUNCH GRID</button>
                     </div>
                 </div>
-                <div class="form-area">
-                    <div class="input-group"><label class="input-label">Lower Price</label><input type="number" id="inpLower" class="input-field"></div>
-                    <div class="input-group"><label class="input-label">Upper Price</label><input type="number" id="inpUpper" class="input-field"></div>
-                    <div class="input-group"><label class="input-label">Grids (2-200)</label><input type="number" id="inpGrids" class="input-field"></div>
-                    <div class="input-group"><label class="input-label">Investment (USDT)</label><input type="number" id="inpInvest" class="input-field"></div>
-                    <button class="btn-create" onclick="createBot()">CREATE BOT</button>
+
+                <div id="r-whale" class="right-content" style="display:none">
+                    <div id="whaleList" style="flex:1; overflow-y:auto"></div>
                 </div>
+
+                <div id="r-arb" class="right-content" style="display:none">
+                    <div id="arbList" style="flex:1; overflow-y:auto"></div>
+                </div>
+
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. AUTH SYSTEM ---
-        const auth = {
-            users: JSON.parse(localStorage.getItem('pionexUsers')) || [],
-            currentUser: JSON.parse(localStorage.getItem('pionexSession')) || null
-        };
-
-        function switchTab(tab) {
-            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
-            document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
-            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-            document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+        // --- AUTH LOGIC ---
+        let currentUser = null;
+        
+        function authTab(t) {
+            document.getElementById('tLogin').classList.toggle('active', t==='login');
+            document.getElementById('tSignup').classList.toggle('active', t==='signup');
+            document.getElementById('loginForm').style.display = t==='login'?'block':'none';
+            document.getElementById('signupForm').style.display = t==='signup'?'block':'none';
         }
 
-        function handleSignup() {
-            const name = document.getElementById('signName').value;
-            const email = document.getElementById('signEmail').value;
-            const pass = document.getElementById('signPass').value;
-            if(!name || !email || !pass) return alert("Please fill all fields");
-            
-            if(auth.users.find(u => u.email === email)) return alert("User already exists");
-            
-            const newUser = { name, email, pass, wallet: 10000, bots: [] };
-            auth.users.push(newUser);
-            localStorage.setItem('pionexUsers', JSON.stringify(auth.users));
-            alert("Account created! Please log in.");
-            switchTab('login');
+        function guestLogin() {
+            currentUser = { name: "Guest", wallet: 10000, bots: [] };
+            enterApp();
         }
 
-        function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPass').value;
-            
-            const user = auth.users.find(u => u.email === email && u.pass === pass);
-            if(user) {
-                auth.currentUser = user;
-                localStorage.setItem('pionexSession', JSON.stringify(user));
-                startApp();
+        function signup() {
+            const name = document.getElementById('sName').value;
+            if(!name) return alert("Name required");
+            const user = { name, wallet: 10000, bots: [] };
+            localStorage.setItem('engineUser', JSON.stringify(user));
+            alert("Created. Please Login.");
+            authTab('login');
+        }
+
+        function login() {
+            const saved = localStorage.getItem('engineUser');
+            if(saved) {
+                currentUser = JSON.parse(saved);
+                enterApp();
             } else {
-                alert("Invalid email or password");
+                alert("User not found. Try Guest Mode.");
             }
         }
 
-        function logout() {
-            auth.currentUser = null;
-            localStorage.removeItem('pionexSession');
-            location.reload();
-        }
+        function logout() { location.reload(); }
 
-        function startApp() {
+        function enterApp() {
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('appScreen').style.display = 'flex';
-            document.getElementById('userNameDisplay').innerText = auth.currentUser.name;
+            document.getElementById('userDisp').innerText = currentUser.name;
+            updateWalletUI();
             initTrading();
         }
 
-        // --- 2. TRADING LOGIC ---
-        const COINS = ["BTC", "ETH", "SOL", "BNB", "DOGE", "XRP", "ADA", "AVAX", "DOT", "MATIC"];
+        // --- TAB LOGIC ---
+        function switchBottom(view, tabEl) {
+            document.querySelectorAll('.p-tab').forEach(e => e.classList.remove('active'));
+            tabEl.classList.add('active');
+            document.querySelectorAll('.tab-view').forEach(e => e.classList.remove('show'));
+            document.getElementById(`view-${view}`).classList.add('show');
+            if(view === 'dex') fetchDex();
+        }
+
+        function switchRight(view, tabEl) {
+            document.querySelectorAll('.r-tab').forEach(e => e.classList.remove('active'));
+            tabEl.classList.add('active');
+            document.querySelectorAll('.right-content').forEach(e => e.style.display = 'none');
+            document.getElementById(`r-${view}`).style.display = view === 'ctrl' ? 'block' : 'flex';
+        }
+
+        // --- TRADING ENGINE ---
+        const COINS = ["BTC","ETH","SOL","BNB","DOGE","XRP","ADA","AVAX","DOT","MATIC"];
         let activeSym = "BTC";
         let prices = {};
-        let socket = null;
 
         function initTrading() {
-            renderMarketList();
+            renderCoins();
             loadChart(activeSym);
-            startStream();
-            updateWallet();
-            renderBots();
+            startSocket();
+            startWhales();
+            startArb();
             setInterval(updateBots, 1000);
         }
 
-        function renderMarketList() {
-            const list = document.getElementById('coinList');
-            list.innerHTML = "";
-            COINS.forEach(sym => {
-                const item = document.createElement('div');
-                item.className = `market-item ${sym === activeSym ? 'active' : ''}`;
-                item.id = `item-${sym}`;
-                item.onclick = () => switchCoin(sym);
-                item.innerHTML = `
-                    <div>
-                        <div class="coin-name">${sym}/USDT</div>
-                        <div class="coin-vol">Vol: ${(Math.random()*500).toFixed(1)}M</div>
-                    </div>
-                    <div style="text-align:right">
-                        <div class="coin-name" id="p-${sym}">--</div>
-                        <div class="coin-vol" id="c-${sym}">--</div>
-                    </div>
-                `;
-                list.appendChild(item);
+        function renderCoins() {
+            const l = document.getElementById('coinList');
+            l.innerHTML = "";
+            COINS.forEach(s => {
+                const el = document.createElement('div');
+                el.className = `market-item ${s===activeSym?'active':''}`;
+                el.id = `item-${s}`;
+                el.onclick = () => changeCoin(s);
+                el.innerHTML = `<span style="font-weight:600; color:#ddd">${s}</span><span id="p-${s}" style="color:#777">--</span>`;
+                l.appendChild(el);
             });
-            updateAIPreview();
         }
 
-        function switchCoin(sym) {
+        function changeCoin(s) {
             document.getElementById(`item-${activeSym}`).classList.remove('active');
-            activeSym = sym;
+            activeSym = s;
             document.getElementById(`item-${activeSym}`).classList.add('active');
-            document.getElementById('chartSymbol').innerText = `${sym}/USDT`;
-            loadChart(sym);
-            updateAIPreview();
+            document.getElementById('chartSymbol').innerText = s + "/USDT";
+            loadChart(s);
+            updateAI();
         }
 
-        function loadChart(sym) {
-            document.getElementById('tv_chart').innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=BINANCE:${sym}USDT&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC" style="width:100%; height:100%; border:none;"></iframe>`;
+        function loadChart(s) {
+            document.getElementById('tv_chart').innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=BINANCE:${s}USDT&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC" style="width:100%; height:100%; border:none;"></iframe>`;
         }
 
-        function startStream() {
-            socket = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
-            socket.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                data.forEach(t => {
+        function startSocket() {
+            const ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+            ws.onmessage = e => {
+                const d = JSON.parse(e.data);
+                d.forEach(t => {
                     const s = t.s.replace('USDT','');
                     if(COINS.includes(s)) {
-                        const p = parseFloat(t.c);
-                        prices[s] = p;
-                        const pEl = document.getElementById(`p-${s}`);
-                        if(pEl) {
-                            pEl.innerText = p.toFixed(p<1?4:2);
-                            const cEl = document.getElementById(`c-${s}`);
-                            cEl.innerText = `${parseFloat(t.P).toFixed(2)}%`;
-                            cEl.style.color = parseFloat(t.P) >= 0 ? 'var(--green)' : 'var(--red)';
+                        prices[s] = parseFloat(t.c);
+                        const el = document.getElementById(`p-${s}`);
+                        if(el) {
+                            el.innerText = prices[s].toFixed(prices[s]<1?4:2);
+                            el.style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
                         }
                         if(s === activeSym) {
-                            const mainP = document.getElementById('chartPrice');
-                            mainP.innerText = p.toFixed(p<1?4:2);
-                            mainP.style.color = parseFloat(t.P) >= 0 ? 'var(--green)' : 'var(--red)';
-                            document.getElementById('chartChange').innerText = `${parseFloat(t.P).toFixed(2)}%`;
+                            document.getElementById('chartPrice').innerText = prices[s].toFixed(2);
+                            document.getElementById('chartChange').innerText = parseFloat(t.P).toFixed(2)+"%";
+                            document.getElementById('chartChange').style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
                         }
                     }
                 });
-            };
-        }
-
-        function getAIParams() {
-            const p = prices[activeSym] || 0;
-            if(!p) return null;
-            return { lower: (p * 0.9).toFixed(p<1?4:2), upper: (p * 1.1).toFixed(p<1?4:2), grids: 20 };
-        }
-
-        function updateAIPreview() {
-            const params = getAIParams();
-            if(params) {
-                document.getElementById('aiRangeDisplay').innerText = `${params.lower} - ${params.upper}`;
-                document.getElementById('aiGridDisplay').innerText = params.grids;
-            } else setTimeout(updateAIPreview, 1000);
-        }
-
-        function autoFillAI() {
-            const params = getAIParams();
-            if(params) {
-                document.getElementById('inpLower').value = params.lower;
-                document.getElementById('inpUpper').value = params.upper;
-                document.getElementById('inpGrids').value = params.grids;
-                document.getElementById('inpInvest').value = 1000;
             }
         }
 
+        // --- FEATURES ---
+        function getAIParams() {
+            const p = prices[activeSym] || 0;
+            return { l: (p*0.9).toFixed(2), h: (p*1.1).toFixed(2), g: 20 };
+        }
+        function updateAI() {
+            const p = getAIParams();
+            document.getElementById('aiRange').innerText = `${p.l} - ${p.h}`;
+        }
+        function fillAI() {
+            const p = getAIParams();
+            document.getElementById('iLow').value = p.l;
+            document.getElementById('iHigh').value = p.h;
+            document.getElementById('iGrids').value = p.g;
+            document.getElementById('iAmt').value = 1000;
+        }
+
         function createBot() {
-            const lower = parseFloat(document.getElementById('inpLower').value);
-            const upper = parseFloat(document.getElementById('inpUpper').value);
-            const invest = parseFloat(document.getElementById('inpInvest').value);
-            
-            if(!lower || !upper || !invest) return alert("Invalid inputs");
-            if(invest > auth.currentUser.wallet) return alert("Insufficient funds");
-
-            auth.currentUser.wallet -= invest;
-            saveUserData();
-            updateWallet();
-
-            auth.currentUser.bots.push({
-                id: Date.now(),
-                pair: activeSym,
-                entry: prices[activeSym],
-                lower, upper, invest,
-                gridProfit: 0
-            });
+            const amt = parseFloat(document.getElementById('iAmt').value);
+            if(amt > currentUser.wallet) return alert("Low Funds");
+            currentUser.wallet -= amt;
+            updateWalletUI();
+            currentUser.bots.push({ id: Date.now(), pair: activeSym, entry: prices[activeSym], invest: amt, pnl: 0 });
             renderBots();
         }
 
         function updateBots() {
-            auth.currentUser.bots.forEach(b => {
-                if(Math.random() > 0.8) b.gridProfit += b.invest * 0.0002;
+            currentUser.bots.forEach(b => {
+                if(Math.random()>0.7) b.pnl += b.invest * 0.0001; // Sim profit
             });
-            saveUserData();
-            renderBots();
-        }
-
-        function stopBot(id) {
-            const idx = auth.currentUser.bots.findIndex(b => b.id === id);
-            if(idx === -1) return;
-            const b = auth.currentUser.bots[idx];
-            
-            const curr = prices[b.pair];
-            const pnl = (curr - b.entry) / b.entry * b.invest;
-            const total = b.invest + pnl + b.gridProfit;
-            
-            auth.currentUser.wallet += total;
-            auth.currentUser.bots.splice(idx, 1);
-            saveUserData();
-            updateWallet();
             renderBots();
         }
 
         function renderBots() {
-            const list = document.getElementById('botList');
-            list.innerHTML = "";
-            auth.currentUser.bots.forEach(b => {
+            const tb = document.getElementById('botTableBody');
+            tb.innerHTML = "";
+            currentUser.bots.forEach((b, i) => {
                 const curr = prices[b.pair] || b.entry;
-                const pnl = (curr - b.entry) / b.entry * b.invest;
-                const total = pnl + b.gridProfit;
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight:bold">${b.pair}/USDT</td>
-                    <td>${b.lower} - ${b.upper}</td>
-                    <td>$${b.invest.toFixed(0)}</td>
-                    <td class="text-green">+$${b.gridProfit.toFixed(4)}</td>
-                    <td class="${total>=0?'text-green':'text-red'}">${total>=0?'+':''}$${total.toFixed(2)}</td>
-                    <td><button class="btn-stop" onclick="stopBot(${b.id})">STOP</button></td>
-                `;
-                list.appendChild(tr);
+                const net = (curr - b.entry)/b.entry * b.invest + b.pnl;
+                tb.innerHTML += `<tr>
+                    <td>${b.pair}</td><td>Grid</td><td>$${b.invest}</td>
+                    <td class="${net>=0?'feed-green':'feed-red'}">$${net.toFixed(2)}</td>
+                    <td>Running</td>
+                    <td><button style="color:red; background:none; border:none; cursor:pointer" onclick="closeBot(${i})">Stop</button></td>
+                </tr>`;
             });
         }
 
-        function updateWallet() {
-            document.getElementById('walletBal').innerText = `$${auth.currentUser.wallet.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+        function closeBot(i) {
+            const b = currentUser.bots[i];
+            const curr = prices[b.pair];
+            const net = (curr - b.entry)/b.entry * b.invest + b.pnl;
+            currentUser.wallet += (b.invest + net);
+            currentUser.bots.splice(i,1);
+            updateWalletUI();
+            renderBots();
         }
 
-        function saveUserData() {
-            localStorage.setItem('pionexSession', JSON.stringify(auth.currentUser));
-            // Update main users array
-            const idx = auth.users.findIndex(u => u.email === auth.currentUser.email);
-            if(idx !== -1) auth.users[idx] = auth.currentUser;
-            localStorage.setItem('pionexUsers', JSON.stringify(auth.users));
+        function updateWalletUI() {
+            document.getElementById('walletDisp').innerText = "$"+currentUser.wallet.toLocaleString(undefined,{minimumFractionDigits:2});
         }
 
-        // --- STARTUP CHECK ---
-        if(auth.currentUser) { startApp(); }
+        // --- EXTERNAL FEEDS ---
+        function startWhales() {
+            const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade/ethusdt@trade/solusdt@trade');
+            ws.onmessage = e => {
+                const d = JSON.parse(e.data);
+                const val = parseFloat(d.p)*parseFloat(d.q);
+                if(val > 50000) {
+                    const el = document.createElement('div');
+                    el.className = "feed-item";
+                    el.innerHTML = `<span>${d.s.replace('USDT','')}</span><span class="${d.m?'feed-red':'feed-green'}">$${Math.floor(val/1000)}k</span>`;
+                    document.getElementById('whaleList').prepend(el);
+                    if(document.getElementById('whaleList').children.length>20) document.getElementById('whaleList').lastChild.remove();
+                }
+            }
+        }
+
+        function startArb() {
+            setInterval(() => {
+                const s = (Math.random()*0.5).toFixed(2);
+                const el = document.createElement('div');
+                el.className = "feed-item";
+                el.innerHTML = `<span>BTC (Bin>Coin)</span><span class="feed-green">+${s}%</span>`;
+                document.getElementById('arbList').prepend(el);
+                if(document.getElementById('arbList').children.length>20) document.getElementById('arbList').lastChild.remove();
+            }, 3000);
+        }
+
+        async function fetchDex() {
+            try {
+                const r = await fetch('https://api.coingecko.com/api/v3/search/trending');
+                const d = await r.json();
+                const tb = document.getElementById('dexTableBody');
+                tb.innerHTML = d.coins.map(c => `<tr>
+                    <td>${c.item.symbol}</td>
+                    <td>#${c.item.market_cap_rank}</td>
+                    <td><a href="https://www.coingecko.com/en/coins/${c.item.id}" target="_blank" style="color:var(--accent)">View</a></td>
+                </tr>`).join('');
+            } catch(e){}
+        }
     </script>
 </body>
 </html>
