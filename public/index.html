@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Titan Crypto Terminal</title>
+    <title>Titan Workstation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
@@ -13,8 +13,26 @@
             overflow-x: hidden;
         }
 
-        h1 { text-align: center; margin-bottom: 20px; color: #58a6ff; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { text-align: center; margin: 10px 0 20px 0; color: #58a6ff; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
 
+        /* --- NEW: SENTIMENT BAR --- */
+        .sentiment-wrapper {
+            max-width: 1800px;
+            margin: 0 auto 20px auto;
+            background: #161b22;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sentiment-label { font-size: 14px; color: #8b949e; font-weight: bold; }
+        .sentiment-value { font-size: 20px; font-weight: 900; }
+        .fg-bar-bg { flex: 1; height: 10px; background: #30363d; margin: 0 20px; border-radius: 5px; position: relative; overflow: hidden; }
+        .fg-fill { height: 100%; width: 0%; transition: width 1s ease; }
+        
+        /* Main Layout */
         .main-layout {
             display: flex;
             flex-wrap: wrap;
@@ -34,7 +52,6 @@
             display: flex;
             flex-direction: column;
         }
-
         .panel-right { flex: 1; }
 
         .panel-header {
@@ -52,25 +69,26 @@
         table { width: 100%; border-collapse: collapse; }
         th { text-align: right; padding: 12px 8px; color: #8b949e; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #30363d; }
         th:first-child { text-align: left; }
+        /* Add pointer cursor to show rows are clickable */
+        tr:not(:first-child) { cursor: pointer; transition: background 0.1s; }
+        tr:hover:not(:first-child) { background-color: #21262d; }
+
         td { padding: 12px 8px; border-bottom: 1px solid #21262d; vertical-align: middle; font-size: 13px; text-align: right; }
         td:first-child { text-align: left; }
         
         .coin-info { display: flex; align-items: center; gap: 10px; }
         .coin-icon { width: 24px; height: 24px; border-radius: 50%; }
 
-        /* SCORE BAR */
-        .score-container { width: 100px; height: 8px; background: #30363d; border-radius: 4px; display: inline-block; overflow: hidden; }
+        /* SCORE & BADGES */
+        .score-container { width: 80px; height: 6px; background: #30363d; border-radius: 4px; display: inline-block; overflow: hidden; }
         .score-fill { height: 100%; border-radius: 4px; }
-        
         .score-bull { background: linear-gradient(90deg, #2ea043, #3fb950); }
         .score-bear { background: linear-gradient(90deg, #ff7b72, #ffa198); }
         .score-neutral { background: #8b949e; }
-
-        /* BADGES */
         .badge { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 4px; }
         .bg-green { background: rgba(46, 160, 67, 0.2); color: #2ea043; }
         .bg-red { background: rgba(255, 123, 114, 0.2); color: #ff7b72; }
-        
+
         /* WHALE FEED */
         #whaleFeed { height: 700px; overflow-y: auto; font-family: monospace; }
         .feed-item { padding: 8px; border-bottom: 1px solid #21262d; font-size: 12px; display: flex; justify-content: space-between; animation: fadeIn 0.3s; }
@@ -78,18 +96,57 @@
         .feed-sell { border-left: 3px solid #ff7b72; background: rgba(255, 123, 114, 0.05); }
         .whale-amt { font-weight: bold; color: #e6edf3; }
 
+        /* --- NEW: CHART MODAL --- */
+        #chartModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            width: 90%;
+            height: 80%;
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 10px 20px;
+            background: #0d1117;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close-btn { cursor: pointer; font-size: 24px; color: #ff7b72; font-weight: bold; }
+        iframe { width: 100%; height: 100%; border: none; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <h1>⚡ Titan Crypto Terminal ⚡</h1>
+    <h1>⚡ Titan Workstation ⚡</h1>
+
+    <div class="sentiment-wrapper">
+        <div class="sentiment-label">MARKET MOOD:</div>
+        <div class="fg-bar-bg">
+            <div id="fgFill" class="fg-fill"></div>
+        </div>
+        <div id="fgValue" class="sentiment-value" style="color:white">...</div>
+    </div>
 
     <div class="main-layout">
         
         <div class="panel">
             <div class="panel-header">
-                <span>Confluence Matrix (Price + Pattern + Indicators + Volume)</span>
+                <span>Confluence Matrix (Click row for Chart)</span>
             </div>
             
             <table id="cryptoTable">
@@ -100,12 +157,12 @@
                         <th>RSI</th>
                         <th>MACD</th>
                         <th>Bollinger</th>
-                        <th>Confluence Score</th>
+                        <th>Score</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="7" style="text-align:center; padding:20px">Calculating Complex Indicators...</td></tr>
+                    <tr><td colspan="7" style="text-align:center; padding:20px">Loading System...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -122,6 +179,16 @@
 
     </div>
 
+    <div id="chartModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="chartTitle" style="font-weight:bold; font-size:18px">CHART</span>
+                <span class="close-btn" onclick="closeChart()">×</span>
+            </div>
+            <div id="chartContainer" style="flex:1"></div>
+        </div>
+    </div>
+
     <script>
         const WHALE_THRESHOLD = 50000; 
         const IGNORED_COINS = ['usdt', 'usdc', 'dai', 'fdusd', 'wbtc', 'steth'];
@@ -130,9 +197,7 @@
         let socket = null;
 
         // --- MATH ENGINES ---
-
-        // 1. RSI
-        function calcRSI(prices, period = 14) {
+        function calcRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
             for (let i = 1; i <= period; i++) {
@@ -152,7 +217,6 @@
             return 100 - (100 / (1 + (avgGain / avgLoss)));
         }
 
-        // 2. MACD (Moving Average Convergence Divergence)
         function calcEMA(prices, period) {
             const k = 2 / (period + 1);
             let ema = prices[0];
@@ -163,71 +227,95 @@
         }
 
         function calcMACD(prices) {
-            // Need at least 26 candles
-            if (prices.length < 26) return { hist: 0, signal: "Neutral" };
-            
+            if (prices.length < 26) return { signal: "Neutral" };
             const ema12 = calcEMA(prices.slice(-12), 12);
             const ema26 = calcEMA(prices.slice(-26), 26);
             const macdLine = ema12 - ema26;
-            
-            // Simplified Signal: If MACD Line > 0 it's usually bullish momentum
-            return { val: macdLine, signal: macdLine > 0 ? "Bull" : "Bear" };
+            return { signal: macdLine > 0 ? "Bull" : "Bear" };
         }
 
-        // 3. Bollinger Bands (Volatility)
         function calcBollinger(prices, period = 20) {
             if (prices.length < period) return { signal: "Neutral" };
             const slice = prices.slice(-period);
             const mean = slice.reduce((a,b) => a+b, 0) / period;
-            const variance = slice.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / period;
-            const stdDev = Math.sqrt(variance);
-            
-            const upper = mean + (stdDev * 2);
-            const lower = mean - (stdDev * 2);
+            const stdDev = Math.sqrt(slice.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / period);
             const current = prices[prices.length - 1];
-
-            // Pattern: Squeeze or Breakout?
-            if (current < lower) return { signal: "Oversold (Buy)", score: 1 };
-            if (current > upper) return { signal: "Overbought (Sell)", score: -1 };
-            return { signal: "In Range", score: 0 };
+            if (current < mean - (stdDev * 2)) return { signal: "Oversold", score: 1 };
+            if (current > mean + (stdDev * 2)) return { signal: "Overbought", score: -1 };
+            return { signal: "Range", score: 0 };
         }
 
-        // --- MASTER ALGO ---
         function generateConfluence(coin, prices) {
-            let score = 50; // Start Neutral
-            
-            // A. RSI Logic (30 pts)
+            let score = 50;
             const rsi = calcRSI(prices);
-            if (rsi < 30) score += 20; // Bullish
-            if (rsi > 70) score -= 20; // Bearish
-
-            // B. MACD Logic (30 pts)
+            if (rsi < 30) score += 20; if (rsi > 70) score -= 20;
             const macd = calcMACD(prices);
             if (macd.signal === "Bull") score += 15; else score -= 15;
-
-            // C. Bollinger Logic (20 pts)
             const bb = calcBollinger(prices);
-            if (bb.score === 1) score += 15; // Price at bottom
-            if (bb.score === -1) score -= 15; // Price at top
-
-            // D. Trend Logic (20 pts)
+            if (bb.score === 1) score += 15; if (bb.score === -1) score -= 15;
             if (coin.price_change_percentage_24h > 0) score += 10; else score -= 10;
-
             return { score, rsi, macd, bb };
         }
 
-        // --- FETCH & RENDER ---
-        async function initApp() {
+        // --- CHART FUNCTIONS ---
+        function openChart(symbol) {
+            const modal = document.getElementById('chartModal');
+            const container = document.getElementById('chartContainer');
+            const title = document.getElementById('chartTitle');
+            
+            title.innerText = `${symbol} - LIVE CHART`;
+            modal.style.display = 'flex';
+            
+            // Embed TradingView Widget via Iframe
+            container.innerHTML = `
+                <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=BINANCE:${symbol}USDT&interval=60&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC" 
+                style="width:100%; height:100%; border:none;"></iframe>
+            `;
+        }
+
+        function closeChart() {
+            document.getElementById('chartModal').style.display = 'none';
+            document.getElementById('chartContainer').innerHTML = ""; // Clear iframe to stop memory leak
+        }
+
+        // Close chart if clicking outside the box
+        window.onclick = function(event) {
+            const modal = document.getElementById('chartModal');
+            if (event.target == modal) closeChart();
+        }
+
+        // --- APP LOGIC ---
+        async function fetchSentiment() {
             try {
-                // Fetch data with Sparkline (History)
+                const res = await fetch('https://api.alternative.me/fng/');
+                const data = await res.json();
+                const val = parseInt(data.data[0].value);
+                const status = data.data[0].value_classification;
+                
+                const fill = document.getElementById('fgFill');
+                const text = document.getElementById('fgValue');
+                
+                text.innerHTML = `${status.toUpperCase()} (${val})`;
+                fill.style.width = `${val}%`;
+                
+                // Color logic
+                if(val < 25) { fill.style.background = '#ff7b72'; text.style.color = '#ff7b72'; } // Red
+                else if(val > 75) { fill.style.background = '#2ea043'; text.style.color = '#2ea043'; } // Green
+                else { fill.style.background = '#e3b341'; text.style.color = '#e3b341'; } // Yellow
+                
+            } catch(e) { console.log("F&G Error"); }
+        }
+
+        async function initApp() {
+            fetchSentiment(); // Get Fear/Greed once
+            
+            try {
                 const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=25&page=1&sparkline=true');
                 if (!response.ok) throw new Error("API Limit");
                 const coins = await response.json();
 
                 marketData = coins.map(coin => {
-                    const history = coin.sparkline_in_7d.price;
-                    const result = generateConfluence(coin, history);
-
+                    const result = generateConfluence(coin, coin.sparkline_in_7d.price);
                     return {
                         symbol: coin.symbol.toUpperCase(),
                         rawSymbol: coin.symbol.toLowerCase(),
@@ -250,7 +338,6 @@
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = ""; 
 
-            // Sort by Best Buy Opportunities first
             marketData.sort((a,b) => b.score - a.score);
 
             marketData.forEach(coin => {
@@ -263,31 +350,33 @@
                 else if (coin.score <= 20) { action = "STRONG SELL"; actionColor = "#ff7b72"; barClass = "score-bear"; }
                 else if (coin.score <= 40) { action = "SELL"; actionColor = "#ff7b72"; barClass = "score-bear"; }
 
-                const row = `
-                    <tr>
-                        <td>
-                            <div class="coin-info">
-                                <img src="${coin.image}" class="coin-icon">
-                                <b>${coin.symbol}</b>
-                            </div>
-                        </td>
-                        <td>$${coin.price.toLocaleString()}</td>
-                        <td>${coin.rsi.toFixed(0)}</td>
-                        <td><span class="badge ${coin.macd.signal==='Bull'?'bg-green':'bg-red'}">${coin.macd.signal}</span></td>
-                        <td><span style="font-size:11px">${coin.bb.signal}</span></td>
-                        <td>
-                            <div class="score-container">
-                                <div class="score-fill ${barClass}" style="width: ${coin.score}%"></div>
-                            </div>
-                            <span style="font-size:10px; margin-left:5px">${coin.score}</span>
-                        </td>
-                        <td style="color:${actionColor}; font-weight:bold">${action}</td>
-                    </tr>`;
-                tableBody.innerHTML += row;
+                const row = document.createElement('tr');
+                // CLICK EVENT: Open Chart
+                row.onclick = () => openChart(coin.symbol);
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="coin-info">
+                            <img src="${coin.image}" class="coin-icon">
+                            <b>${coin.symbol}</b>
+                        </div>
+                    </td>
+                    <td>$${coin.price.toLocaleString()}</td>
+                    <td>${coin.rsi.toFixed(0)}</td>
+                    <td><span class="badge ${coin.macd.signal==='Bull'?'bg-green':'bg-red'}">${coin.macd.signal}</span></td>
+                    <td><span style="font-size:11px">${coin.bb.signal}</span></td>
+                    <td>
+                        <div class="score-container">
+                            <div class="score-fill ${barClass}" style="width: ${coin.score}%"></div>
+                        </div>
+                        <span style="font-size:10px; margin-left:5px">${coin.score}</span>
+                    </td>
+                    <td style="color:${actionColor}; font-weight:bold">${action}</td>
+                `;
+                tableBody.appendChild(row);
             });
         }
 
-        // --- WHALE SOCKET ---
         function startWhaleSocket(coins) {
             if (socket) return;
             const streams = coins.filter(c => !IGNORED_COINS.includes(c.rawSymbol)).map(c => `${c.rawSymbol}usdt@trade`).join('/');
