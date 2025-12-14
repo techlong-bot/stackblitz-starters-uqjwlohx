@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Binance Whale Tracker</title>
+    <title>Crypto Signal Scanner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
-            background-color: #0b0e11; /* Binance Dark Background */
+            background-color: #0b0e11;
             color: #eaecef;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             padding: 10px;
         }
 
-        h1 { text-align: center; margin-bottom: 20px; color: #F0B90B; /* Binance Yellow */ }
+        h1 { text-align: center; margin-bottom: 20px; color: #F0B90B; }
 
         .container {
             max-width: 800px;
@@ -21,79 +21,52 @@
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            overflow-x: auto; /* Allows scrolling on small phones */
+            overflow-x: auto;
         }
 
         /* BUTTONS */
         .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        button { 
-            padding: 8px 16px; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            font-size: 14px;
-        }
+        button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; }
         .btn-all { background-color: #2b3139; color: #eaecef; }
-        .btn-buy { background-color: #0ecb81; color: white; } /* Binance Green */
-        button:hover { opacity: 0.9; }
-
+        .btn-buy { background-color: #0ecb81; color: white; }
+        
         /* TABLE */
         table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th { 
-            text-align: right; 
-            padding: 12px; 
-            border-bottom: 1px solid #2b3139; 
-            color: #848e9c; 
-            font-size: 12px;
-        }
-        th:first-child { text-align: left; } /* Align "Asset" to left */
-
-        td { 
-            padding: 12px; 
-            border-bottom: 1px solid #2b3139; 
-            vertical-align: middle; 
-            font-size: 14px;
-            text-align: right;
-        }
+        th { text-align: right; padding: 12px; border-bottom: 1px solid #2b3139; color: #848e9c; font-size: 12px; }
+        th:first-child { text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #2b3139; vertical-align: middle; font-size: 14px; text-align: right; }
         td:first-child { text-align: left; }
 
         .coin-info { display: flex; align-items: center; gap: 10px; }
         .coin-icon { width: 24px; height: 24px; border-radius: 50%; background: #fff; }
+        .signal-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; white-space: nowrap; }
         
-        .signal-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 11px;
-            white-space: nowrap;
-        }
-
         .green-text { color: #0ecb81; }
         .red-text { color: #f6465d; }
+        .error-msg { color: #f6465d; text-align: center; padding: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>⚡ Binance Signal Scanner</h1>
+        <h1>⚡ Market Signal Scanner</h1>
 
         <div class="controls">
-            <button class="btn-all" onclick="filterTable('ALL')">All Pairs</button>
+            <button class="btn-all" onclick="filterTable('ALL')">All Coins</button>
             <button class="btn-buy" onclick="filterTable('BUY')">Buy Signals Only</button>
         </div>
         
         <table id="cryptoTable">
             <thead>
                 <tr>
-                    <th>Pair</th>
+                    <th>Asset</th>
                     <th>Price</th>
                     <th>24h %</th>
                     <th>Signal</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr><td colspan="4" style="text-align:center; padding: 20px;">Connecting to Binance API...</td></tr>
+                <tr><td colspan="4" style="text-align:center; padding: 20px;">Connecting to market data...</td></tr>
             </tbody>
         </table>
     </div>
@@ -105,10 +78,25 @@
         async function loadData() {
             try {
                 const response = await fetch('/market-data');
-                marketData = await response.json();
+                const data = await response.json();
+
+                // SAFETY CHECK: Did the server send an error?
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // SAFETY CHECK: Is the data actually a list?
+                if (!Array.isArray(data)) {
+                    throw new Error("Received invalid data format");
+                }
+
+                marketData = data;
                 renderTable();
+
             } catch (error) {
                 console.error("Error:", error);
+                document.getElementById('tableBody').innerHTML = 
+                    `<tr><td colspan="4" class="error-msg">⚠️ System Error: ${error.message || "Retrying..."}</td></tr>`;
             }
         }
 
@@ -116,11 +104,18 @@
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = ""; 
 
-            marketData.forEach(coin => {
-                if (currentFilter === 'BUY' && !coin.signal.includes('BUY')) {
-                    return; 
-                }
+            // Filter Logic
+            const filteredData = marketData.filter(coin => {
+                if (currentFilter === 'BUY') return coin.signal.includes('BUY');
+                return true;
+            });
 
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">No coins match this filter.</td></tr>`;
+                return;
+            }
+
+            filteredData.forEach(coin => {
                 const changeColor = coin.change24h >= 0 ? 'green-text' : 'red-text';
                 const changeSign = coin.change24h >= 0 ? '+' : '';
 
@@ -129,10 +124,10 @@
                         <td>
                             <div class="coin-info">
                                 <img src="${coin.image}" class="coin-icon" onerror="this.src='https://via.placeholder.com/24?text=?'">
-                                <b>${coin.name}</b> <span style="color:#848e9c; font-size:12px">/USDT</span>
+                                <b>${coin.name}</b> <span style="color:#848e9c; font-size:12px">${coin.fullName}</span>
                             </div>
                         </td>
-                        <td>${coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td>$${coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                         <td class="${changeColor}">${changeSign}${coin.change24h.toFixed(2)}%</td>
                         <td>
                             <span class="signal-badge" style="background-color: ${coin.signalColor}; color: ${coin.signalColor === '#00ff00' ? 'black' : 'white'}">
@@ -143,10 +138,6 @@
                 `;
                 tableBody.innerHTML += row;
             });
-
-            if (tableBody.innerHTML === "") {
-                tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">No signals found.</td></tr>`;
-            }
         }
 
         function filterTable(type) {
@@ -155,7 +146,7 @@
         }
 
         loadData();
-        setInterval(loadData, 5000); // Check Binance every 5 seconds
+        setInterval(loadData, 10000); // Update every 10 seconds
     </script>
 
 </body>

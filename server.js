@@ -4,62 +4,48 @@ const app = express();
 
 app.use(express.static('public'));
 
-// --- CACHE STORAGE ---
+// --- CACHE (Keeps data for 1 min to prevent errors) ---
 let cache = {
-    data: null,      // Stores the list of coins
-    lastFetch: 0     // Stores the time (in ms) when we last fetched
+    data: null,
+    lastFetch: 0
 };
 
-// Function to fetch data with protection (Cache)
-async function getCachedMarketData() {
+async function getMarketData() {
     const now = Date.now();
-    const ONE_MINUTE = 60 * 1000; 
-
-    // 1. If we have data and it is less than 1 minute old, return it!
-    if (cache.data && (now - cache.lastFetch < ONE_MINUTE)) {
-        console.log("Serving from Cache (No Binance request)");
+    // 1. Return saved data if it's fresh (less than 60 seconds old)
+    if (cache.data && (now - cache.lastFetch < 60000)) {
+        console.log("Serving from Cache");
         return cache.data;
     }
 
-    // 2. Otherwise, fetch new data from Binance
-    console.log("Fetching new data from Binance...");
+    // 2. Fetch from CoinCap (More reliable than Binance for servers)
+    console.log("Fetching new data from CoinCap...");
     try {
-        const response = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
-        const allCoins = response.data;
+        const response = await axios.get('https://api.coincap.io/v2/assets?limit=25');
+        const allCoins = response.data.data; // CoinCap puts the list inside .data
 
-        // Process the data
-        const topCoins = allCoins
-            .filter(coin => coin.symbol.endsWith('USDT'))
-            .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-            .slice(0, 25);
-
-        const enrichedData = topCoins.map(coin => {
-            const shortSymbol = coin.symbol.replace('USDT', '');
-            const priceChange = parseFloat(coin.priceChangePercent);
+        const enrichedData = allCoins.map(coin => {
+            const priceChange = parseFloat(coin.changePercent24Hr);
             
-            let netflow = 0;
+            // SIGNAL LOGIC
             let signal = "NEUTRAL";
             let signalColor = "gray";
 
             if (priceChange < -2.5) {
                 signal = "BUY THE DIP";
                 signalColor = "#00ff00"; // Green
-                netflow = Math.floor(Math.random() * -500) - 200; 
             } else if (priceChange > 2.5) {
                 signal = "TAKE PROFIT";
                 signalColor = "#ff4d4d"; // Red
-                netflow = Math.floor(Math.random() * 500) + 200; 
-            } else {
-                netflow = Math.floor(Math.random() * 200) - 100;
             }
 
             return {
-                name: shortSymbol, 
-                symbol: coin.symbol, 
-                price: parseFloat(coin.lastPrice),
+                name: coin.symbol, // BTC, ETH, etc.
+                fullName: coin.name, // Bitcoin, Ethereum
+                price: parseFloat(coin.priceUsd),
                 change24h: priceChange,
-                image: `https://assets.coincap.io/assets/icons/${shortSymbol.toLowerCase()}@2x.png`,
-                netflow: netflow,
+                // Get icon from CoinCap's image server
+                image: `https://assets.coincap.io/assets/icons/${coin.symbol.toLowerCase()}@2x.png`,
                 signal: signal,
                 signalColor: signalColor
             };
@@ -68,11 +54,11 @@ async function getCachedMarketData() {
         // Save to cache
         cache.data = enrichedData;
         cache.lastFetch = now;
-        
         return enrichedData;
 
     } catch (error) {
-        // If Binance blocks us, return old data if we have it
+        console.error("API Error:", error.message);
+        // If API fails, return the old data if we have it
         if (cache.data) return cache.data;
         throw error;
     }
@@ -80,15 +66,13 @@ async function getCachedMarketData() {
 
 app.get('/market-data', async (req, res) => {
     try {
-        const data = await getCachedMarketData();
+        const data = await getMarketData();
         res.json(data);
     } catch (error) {
-        console.error("Error fetching data:", error.message);
-        // Send a friendly error to the website instead of crashing
-        res.status(500).json({ error: "Market data temporarily unavailable. Try again in 1 min." });
+        res.status(500).json({ error: "Data unavailable. Try again later." });
     }
 });
 
 app.listen(3000, () => {
-    console.log("Smart Server running. Cache enabled.");
+    console.log("Server running with CoinCap API.");
 });
