@@ -196,4 +196,105 @@
                                 <div>
                                     <b>${coin.symbol}</b>
                                     <div style="font-size:11px" class="${coin.change >= 0 ? 'green-text' : 'red-text'}">
-                                        ${coin.change.toFixed
+                                        ${coin.change.toFixed(2)}%
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>$${coin.price.toLocaleString()}</td>
+                        <td><span class="signal-badge" style="background:${coin.signalColor}; color:white">${coin.signal}</span></td>
+                    </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // 3. Start Dynamic WebSocket
+        function startMultiAssetSocket(coins) {
+            if (socket) return; // Don't start twice
+
+            // A. Filter out stablecoins & build stream string
+            const streams = coins
+                .filter(c => !IGNORED_COINS.includes(c.rawSymbol)) // Remove USDT, USDC etc
+                .map(c => `${c.rawSymbol}usdt@trade`) // format: btcusdt@trade
+                .join('/');
+
+            // B. Connect to Binance Multiplex Stream
+            const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
+            console.log("Connecting to:", wsUrl);
+            
+            socket = new WebSocket(wsUrl);
+            const feedBox = document.getElementById('whaleFeed');
+            feedBox.innerHTML = ""; // Clear "Initializing" text
+
+            socket.onopen = () => {
+                const note = document.createElement('div');
+                note.style.cssText = "text-align:center; padding:10px; color:#2ea043; font-size:12px;";
+                note.innerText = `Connected to ${streams.split('/').length} Top Assets`;
+                feedBox.appendChild(note);
+            };
+
+            socket.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                const data = msg.data; // The actual trade data is inside .data
+                
+                const price = parseFloat(data.p);
+                const quantity = parseFloat(data.q);
+                const totalUsd = price * quantity;
+
+                // FILTER: Only Whales
+                if (totalUsd > WHALE_THRESHOLD) {
+                    const symbol = data.s.replace('USDT', ''); // Clean name
+                    const isSell = data.m; // data.m = true means Maker was Buyer (so Taker was Seller)
+                    const type = isSell ? 'SELL' : 'BUY';
+                    const colorClass = type === 'BUY' ? 'feed-buy' : 'feed-sell';
+                    const icon = type === 'BUY' ? '🟢' : '🔴';
+
+                    const item = document.createElement('div');
+                    item.className = `feed-item ${colorClass}`;
+                    item.innerHTML = `
+                        <div>
+                            <div class="whale-amt">${icon} ${symbol} ${type}</div>
+                            <div class="whale-sub">Price: $${price.toLocaleString()}</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="whale-amt">$${Math.floor(totalUsd).toLocaleString()}</div>
+                            <div class="whale-sub">${quantity.toFixed(2)} Coins</div>
+                        </div>
+                    `;
+
+                    feedBox.prepend(item);
+                    
+                    // Limit feed history
+                    if (feedBox.children.length > 50) {
+                        feedBox.removeChild(feedBox.lastChild);
+                    }
+                }
+            };
+        }
+
+        function filterTable(t) { currentFilter = t; renderTable(); }
+
+        // Start everything
+        initApp();
+
+        // Refresh market data (table) every 60s (Socket stays open)
+        setInterval(() => {
+            // We only refresh the table data, we don't reconnect socket to avoid lag
+            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=25&page=1&sparkline=false')
+                .then(res => res.json())
+                .then(data => {
+                    // Update prices without breaking socket
+                    marketData.forEach(oldCoin => {
+                        const newCoin = data.find(c => c.symbol.toUpperCase() === oldCoin.symbol);
+                        if(newCoin) {
+                            oldCoin.price = newCoin.current_price;
+                            oldCoin.change = newCoin.price_change_percentage_24h;
+                        }
+                    });
+                    renderTable();
+                });
+        }, 60000);
+
+    </script>
+</body>
+</html>
