@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ENGINE | Pro Terminal</title>
+    <title>BINANCE | Clone</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Binance+Plex:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* BINANCE PRO PALETTE */
             --bg-body: #0b0e11;
             --bg-panel: #161a1e;
             --bg-hover: #2b3139;
@@ -16,516 +15,374 @@
             --text-muted: #848e9c;
             --green: #0ecb81;
             --red: #f6465d;
-            --yellow: #fcd535;
             --primary: #fcd535;
+            --primary-hover: #f0c930;
             --primary-text: #1e2329;
         }
 
-        * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--bg-hover) var(--bg-body); }
-        
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: 'IBM Plex Sans', sans-serif;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            font-size: 12px;
-        }
+        * { box-sizing: border-box; scrollbar-width: thin; }
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'IBM Plex Sans', sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; font-size: 12px; overflow: hidden; }
 
-        /* --- LAYOUT GRID --- */
-        .workspace {
-            display: grid;
-            grid-template-columns: 280px 1fr 320px;
-            grid-template-rows: 40px 1fr 300px;
-            flex: 1;
-            overflow: hidden;
-        }
+        /* --- HEADER NAV --- */
+        .header { height: 50px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 20px; flex-shrink: 0; }
+        .logo { color: var(--primary); font-weight: 800; font-size: 18px; letter-spacing: -0.5px; margin-right: 10px; cursor: pointer; }
+        .nav-link { color: var(--text-muted); font-weight: 500; cursor: pointer; font-size: 13px; padding: 15px 0; border-bottom: 2px solid transparent; transition: 0.2s; }
+        .nav-link:hover { color: var(--primary); }
+        .nav-link.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .header-right { margin-left: auto; display: flex; gap: 15px; align-items: center; }
+        .btn-login { background: var(--bg-hover); color: var(--text-main); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 500; }
+        .btn-register { background: var(--primary); color: var(--primary-text); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; }
 
-        /* --- 1. HEADER --- */
-        .header {
-            grid-column: 1 / -1;
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-        }
-        .logo { font-weight: 700; font-size: 16px; color: var(--primary); letter-spacing: 1px; }
-        .ticker-scroll { flex: 1; margin: 0 40px; overflow: hidden; white-space: nowrap; color: var(--text-muted); font-size: 11px; }
-        .user-menu { display: flex; gap: 15px; font-weight: 600; font-size: 12px; align-items: center; }
-        .balance-pill { background: var(--bg-hover); padding: 4px 10px; border-radius: 4px; color: var(--text-main); }
+        /* --- VIEW CONTAINER --- */
+        .view-container { flex: 1; display: none; overflow: hidden; }
+        .view-container.active { display: flex; flex-direction: column; }
 
-        /* --- 2. MARKET LIST (LEFT) --- */
-        .panel-left {
-            grid-row: 2 / -1;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-        .search-box { padding: 10px; border-bottom: 1px solid var(--border); }
-        .search-input { width: 100%; background: var(--bg-body); border: 1px solid var(--border); padding: 6px; color: white; border-radius: 4px; font-size: 11px; }
+        /* --- COMMON LAYOUTS --- */
+        .grid-trade { display: grid; grid-template-columns: 280px 1fr 320px; grid-template-rows: 40px 1fr 300px; flex: 1; overflow: hidden; }
+        .panel { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .panel-bottom { border-top: 1px solid var(--border); }
         
-        .market-header { display: flex; padding: 8px 12px; color: var(--text-muted); font-size: 10px; font-weight: 600; }
-        .coin-list { flex: 1; overflow-y: auto; }
-        .coin-row { display: flex; justify-content: space-between; padding: 8px 12px; cursor: pointer; transition: 0.1s; }
-        .coin-row:hover { background: var(--bg-hover); }
-        .coin-row.active { background: #2b3139; border-left: 2px solid var(--primary); }
-        
-        /* --- 3. CHART (CENTER TOP) --- */
-        .panel-center {
-            grid-row: 2;
-            background: var(--bg-body);
-            display: flex;
-            flex-direction: column;
-            border-bottom: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-        }
-        .chart-nav { height: 40px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; gap: 20px; }
-        .pair-title { font-size: 16px; font-weight: 700; }
-        .price-live { font-size: 16px; font-weight: 600; color: var(--green); }
-
-        /* --- 4. BOTTOM TABS (CENTER BOTTOM) --- */
-        .panel-bottom {
-            grid-column: 2;
-            grid-row: 3;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-        .tabs { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); }
-        .tab { padding: 10px 20px; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 12px; border-top: 2px solid transparent; }
-        .tab.active { color: var(--primary); border-top-color: var(--primary); background: var(--bg-body); }
-        
-        .tab-content { flex: 1; overflow-y: auto; display: none; }
-        .tab-content.show { display: block; }
-
-        /* --- 5. ORDER BOOK & FORM (RIGHT) --- */
-        .panel-right {
-            grid-row: 2 / -1;
-            background: var(--bg-panel);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* ORDER BOOK */
-        .order-book { height: 40%; overflow: hidden; display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
-        .ob-header { padding: 8px 12px; font-weight: 600; color: var(--text-muted); font-size: 11px; }
-        .ob-content { flex: 1; overflow-y: hidden; display: flex; flex-direction: column; }
-        .ob-row { display: flex; justify-content: space-between; padding: 2px 12px; font-family: 'Binance Plex', sans-serif; cursor: pointer; position: relative; }
-        .ob-row:hover { background: var(--bg-hover); }
-        .ob-bg { position: absolute; top:0; right:0; height:100%; opacity: 0.15; }
-        
-        /* TRADES */
-        .trade-list { height: 25%; border-bottom: 1px solid var(--border); overflow-y: hidden; }
-        
-        /* TRADE FORM */
-        .trade-form { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .form-toggle { display: flex; background: var(--bg-body); border-radius: 4px; padding: 2px; margin-bottom: 10px; }
-        .toggle-btn { flex: 1; text-align: center; padding: 6px; cursor: pointer; font-weight: 600; border-radius: 4px; color: var(--text-muted); }
-        .toggle-btn.active { background: var(--bg-hover); color: var(--text-main); }
-        
-        .input-wrap { position: relative; }
-        .input-wrap input { width: 100%; background: var(--bg-body); border: 1px solid var(--border); padding: 10px; color: white; border-radius: 4px; font-size: 12px; text-align: right; }
-        .input-label { position: absolute; left: 10px; top: 10px; color: var(--text-muted); }
-        
-        .btn-buy { width: 100%; padding: 12px; background: var(--green); border: none; border-radius: 4px; color: white; font-weight: 700; cursor: pointer; font-size: 14px; }
-        .btn-bot { width: 100%; padding: 12px; background: var(--primary); border: none; border-radius: 4px; color: var(--primary-text); font-weight: 700; cursor: pointer; font-size: 14px; }
-
-        /* --- AUTH SCREEN --- */
-        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 99; display: flex; justify-content: center; align-items: center; }
-        .auth-box { width: 360px; padding: 40px; background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border); text-align: center; }
-        .auth-btn { width: 100%; background: var(--primary); padding: 12px; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 15px; }
-
         /* TABLES */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 8px 12px; color: var(--text-muted); font-weight: 500; font-size: 11px; background: var(--bg-panel); position: sticky; top: 0; }
-        td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
-        
+        th { text-align: right; padding: 8px; color: var(--text-muted); font-size: 11px; background: var(--bg-panel); position: sticky; top: 0; font-weight: 500; }
+        th:first-child { text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); text-align: right; }
+        td:first-child { text-align: left; }
+        tr:hover { background: var(--bg-hover); cursor: pointer; }
+
         /* UTILS */
         .text-green { color: var(--green); } .text-red { color: var(--red); }
-        .text-white { color: white; }
+        .btn-green { width: 100%; padding: 10px; background: var(--green); color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
+        .btn-red { width: 100%; padding: 10px; background: var(--red); color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
+        .input-box { width: 100%; background: var(--bg-body); border: 1px solid var(--border); padding: 10px; color: white; border-radius: 4px; text-align: right; margin-bottom: 10px; }
+
+        /* --- 1. FUTURES SPECIFIC --- */
+        .leverage-slider { -webkit-appearance: none; width: 100%; height: 4px; background: var(--bg-hover); border-radius: 2px; outline: none; margin: 15px 0; }
+        .leverage-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+        .pos-tab { display: flex; border-bottom: 1px solid var(--border); }
+        .pos-item { padding: 10px 15px; cursor: pointer; color: var(--text-muted); font-weight: 600; }
+        .pos-item.active { color: var(--primary); border-bottom: 2px solid var(--primary); background: var(--bg-body); }
+
+        /* --- 2. EARN SPECIFIC --- */
+        .earn-container { max-width: 1200px; margin: 0 auto; padding: 30px; width: 100%; overflow-y: auto; }
+        .earn-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .apy-text { font-size: 18px; color: var(--green); font-weight: 700; }
+        .earn-badge { background: rgba(14, 203, 129, 0.1); color: var(--green); padding: 2px 6px; border-radius: 2px; font-size: 10px; font-weight: 700; }
+
+        /* --- 3. ACADEMY SPECIFIC --- */
+        .edu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 30px; overflow-y: auto; }
+        .edu-card { background: var(--bg-panel); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); transition: 0.2s; }
+        .edu-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .edu-img { height: 140px; background: #2b3139; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .edu-content { padding: 15px; }
+        .edu-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+        .edu-meta { font-size: 11px; color: var(--text-muted); }
+
+        /* --- 4. OPTIONS SPECIFIC --- */
+        .opt-header { padding: 15px; text-align: center; background: var(--bg-panel); border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 700; }
+        .opt-table th { text-align: center; }
+        .opt-table td { text-align: center; font-family: 'Binance Plex', sans-serif; }
+        .strike-cell { background: var(--bg-hover); color: var(--text-main); font-weight: 700; width: 80px; }
+        .call-side { color: var(--green); } .put-side { color: var(--red); }
+
     </style>
 </head>
 <body>
 
-    <div id="authOverlay">
-        <div class="auth-box">
-            <div class="logo" style="font-size:24px; margin-bottom:20px">/// ENGINE</div>
-            <input id="loginName" placeholder="Enter Name" style="width:100%; padding:10px; background:#0b0e11; border:1px solid #252b36; color:white; border-radius:4px;">
-            <button class="auth-btn" onclick="login()">ENTER TERMINAL</button>
-            <div style="margin-top:15px; font-size:11px; color:#848e9c; cursor:pointer" onclick="loginGuest()">Continue as Guest</div>
-        </div>
-    </div>
-
     <div class="header">
-        <div style="display:flex; align-items:center; gap:20px">
-            <div class="logo">/// ENGINE</div>
-            <div class="ticker-scroll" id="newsTicker">Connecting to global news wire...</div>
-        </div>
-        <div class="user-menu">
-            <div class="balance-pill">Est: <span id="walletVal">$10,000.00</span></div>
-            <span id="userName">User</span>
-            <span onclick="logout()" style="cursor:pointer; color:#848e9c">Exit</span>
+        <div class="logo" onclick="setView('spot')">BINANCE</div>
+        <div class="nav-link active" id="nav-spot" onclick="setView('spot')">Spot</div>
+        <div class="nav-link" id="nav-futures" onclick="setView('futures')">Futures 125x</div>
+        <div class="nav-link" id="nav-options" onclick="setView('options')">Options</div>
+        <div class="nav-link" id="nav-earn" onclick="setView('earn')">Earn</div>
+        <div class="nav-link" id="nav-edu" onclick="setView('edu')">Square</div>
+        <div class="header-right">
+            <span style="font-size:12px">Wallet: <b id="globalWallet">$10,000</b></span>
+            <div class="btn-login">Log In</div>
+            <div class="btn-register">Register</div>
         </div>
     </div>
 
-    <div class="workspace">
-        
-        <div class="panel-left">
-            <div class="search-box"><input type="text" class="search-input" placeholder="Search"></div>
-            <div class="market-header"><span>Pair</span><span style="margin-left:auto">Price</span></div>
-            <div id="marketList" class="coin-list"></div>
-        </div>
-
-        <div class="panel-center">
-            <div class="chart-nav">
-                <span class="pair-title" id="activePair">BTC/USDT</span>
-                <span class="price-live" id="activePrice">--</span>
-                <span style="font-size:11px; color:#848e9c">24h Change: <span id="activeChange">--%</span></span>
+    <div id="view-spot" class="view-container active">
+        <div class="grid-trade">
+            <div class="panel" style="grid-row: 1/-1">
+                <div style="padding:10px; border-bottom:1px solid var(--border)"><input placeholder="Search" style="width:100%; background:var(--bg-body); border:none; padding:8px; color:white; border-radius:4px"></div>
+                <div style="flex:1; overflow-y:auto" id="spotList"></div>
             </div>
-            <div id="tv_chart" style="flex:1; width:100%"></div>
-        </div>
-
-        <div class="panel-bottom">
-            <div class="tabs">
-                <div class="tab active" onclick="switchTab('bots', this)">Running Bots</div>
-                <div class="tab" onclick="switchTab('whales', this)">Whale Radar</div>
-                <div class="tab" onclick="switchTab('dex', this)">On-Chain Gems</div>
-            </div>
-            
-            <div id="tab-bots" class="tab-content show">
-                <table>
-                    <thead><tr><th>Time</th><th>Pair</th><th>Type</th><th>Invested</th><th>Grid Profit</th><th>Total PnL</th><th>Action</th></tr></thead>
-                    <tbody id="botTable"></tbody>
-                </table>
-            </div>
-            
-            <div id="tab-whales" class="tab-content">
-                <table>
-                    <thead><tr><th>Time</th><th>Pair</th><th>Side</th><th>Value</th><th>Price</th></tr></thead>
-                    <tbody id="whaleTable"></tbody>
-                </table>
-            </div>
-
-            <div id="tab-dex" class="tab-content">
-                <table>
-                    <thead><tr><th>Rank</th><th>Token</th><th>Price Change</th><th>Link</th></tr></thead>
-                    <tbody id="dexTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="panel-right">
-            
-            <div class="order-book">
-                <div class="ob-header">Order Book</div>
-                <div id="asks" style="flex:1; display:flex; flex-direction:column-reverse; overflow:hidden"></div>
-                <div style="padding:5px 12px; font-size:16px; font-weight:600; text-align:center" id="midPrice" class="text-green">--</div>
-                <div id="bids" style="flex:1; overflow:hidden"></div>
-            </div>
-
-            <div class="trade-list">
-                <div class="ob-header">Recent Trades</div>
-                <div id="tradeList" style="overflow-y:hidden; height:100%"></div>
-            </div>
-
-            <div class="trade-form">
-                <div class="form-toggle">
-                    <div class="toggle-btn active" onclick="setMode('MANUAL', this)">Spot</div>
-                    <div class="toggle-btn" onclick="setMode('BOT', this)">Grid Bot</div>
+            <div class="panel" style="grid-column: 2; border-bottom:1px solid var(--border)">
+                <div style="padding:10px; display:flex; gap:15px; align-items:center">
+                    <span style="font-size:18px; font-weight:700">BTC/USDT</span>
+                    <span class="text-green" style="font-size:16px; font-weight:600">$50,000.00</span>
                 </div>
-
-                <div id="manualForm">
-                    <div class="input-wrap"><span class="input-label">Price</span><input id="spotPrice" value="Market"></div>
-                    <div class="input-wrap" style="margin-top:10px"><span class="input-label">Amount</span><input id="spotAmt" placeholder="USDT"></div>
-                    <button class="btn-buy" style="margin-top:15px" onclick="placeOrder()">BUY BTC</button>
-                </div>
-
-                <div id="botForm" style="display:none">
-                    <div class="input-wrap"><span class="input-label">Low</span><input id="botLow"></div>
-                    <div class="input-wrap" style="margin-top:5px"><span class="input-label">High</span><input id="botHigh"></div>
-                    <div class="input-wrap" style="margin-top:5px"><span class="input-label">Grids</span><input id="botGrids" value="20"></div>
-                    <div class="input-wrap" style="margin-top:5px"><span class="input-label">Inv</span><input id="botInv"></div>
-                    <button class="btn-bot" style="margin-top:15px" onclick="createBot()">CREATE BOT</button>
-                    <div style="text-align:center; margin-top:5px; font-size:10px; color:#848e9c; cursor:pointer" onclick="fillAI()">⚡ Auto-Fill AI Parameters</div>
+                <div id="spotChart" style="flex:1"></div>
+            </div>
+            <div class="panel panel-bottom" style="grid-column: 2; grid-row: 3">
+                <div class="pos-tab"><div class="pos-item active">Open Orders</div><div class="pos-item">Order History</div></div>
+                <div style="padding:20px; text-align:center; color:var(--text-muted)">No Open Orders</div>
+            </div>
+            <div class="panel" style="grid-column: 3; grid-row: 1/-1">
+                <div style="padding:10px; font-weight:600">Order Book</div>
+                <div id="spotBook" style="height:300px; overflow:hidden"></div>
+                <div style="padding:15px; border-top:1px solid var(--border)">
+                    <div style="display:flex; gap:10px; margin-bottom:15px"><button class="btn-green">Buy</button><button class="btn-red" style="opacity:0.5">Sell</button></div>
+                    <label style="color:var(--text-muted); font-size:11px">Price</label>
+                    <input class="input-box" value="Market">
+                    <label style="color:var(--text-muted); font-size:11px">Amount</label>
+                    <input class="input-box" placeholder="USDT">
+                    <button class="btn-green" style="margin-top:10px">Buy BTC</button>
                 </div>
             </div>
-
         </div>
+    </div>
+
+    <div id="view-futures" class="view-container">
+        <div class="grid-trade">
+            <div class="panel" style="grid-row: 1/-1">
+                <div style="padding:10px; font-weight:700; color:var(--primary)">USDⓈ-M Futures</div>
+                <div style="flex:1; overflow-y:auto" id="futuresList"></div>
+            </div>
+            <div class="panel" style="grid-column: 2">
+                <div style="padding:10px; display:flex; justify-content:space-between; align-items:center">
+                    <span style="font-size:18px; font-weight:700">BTCUSDT <span style="font-size:12px; background:#2b3139; padding:2px 4px; border-radius:2px; color:var(--primary)">PERP</span></span>
+                    <span style="color:var(--primary)">Funding: 0.0100%</span>
+                </div>
+                <div id="futuresChart" style="flex:1"></div>
+            </div>
+            <div class="panel panel-bottom" style="grid-column: 2; grid-row: 3">
+                <div class="pos-tab">
+                    <div class="pos-item active">Positions (0)</div>
+                    <div class="pos-item">Open Orders (0)</div>
+                    <div class="pos-item">Trade History</div>
+                </div>
+                <table style="margin-top:0">
+                    <thead><tr><th>Symbol</th><th>Size</th><th>Entry Price</th><th>Mark Price</th><th>Liq. Price</th><th>Margin</th><th>PnL (ROE%)</th></tr></thead>
+                    <tbody><tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted)">No Open Positions</td></tr></tbody>
+                </table>
+            </div>
+            <div class="panel" style="grid-column: 3; grid-row: 1/-1">
+                <div style="padding:15px">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px">
+                        <span style="background:#2b3139; padding:4px 8px; border-radius:2px; font-weight:600">Cross</span>
+                        <span style="background:#2b3139; padding:4px 8px; border-radius:2px; font-weight:600">20x</span>
+                    </div>
+                    
+                    <div style="color:var(--text-muted); margin-bottom:5px">Adjust Leverage</div>
+                    <input type="range" min="1" max="125" value="20" class="leverage-slider" oninput="document.getElementById('levDisp').innerText=this.value+'x'">
+                    <div style="text-align:right; font-weight:700; color:var(--primary)" id="levDisp">20x</div>
+
+                    <div style="display:flex; gap:10px; margin:15px 0">
+                        <button class="btn-green" style="flex:1">Open Long</button>
+                        <button class="btn-red" style="flex:1">Open Short</button>
+                    </div>
+
+                    <label style="color:var(--text-muted); font-size:11px">Price</label>
+                    <input class="input-box" value="Market">
+                    <label style="color:var(--text-muted); font-size:11px">Size (USDT)</label>
+                    <input class="input-box" placeholder="1000">
+                    
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:11px; color:var(--text-muted)">
+                        <span>Cost: 50.00 USDT</span>
+                        <span>Max: 2.5 BTC</span>
+                    </div>
+                    
+                    <button class="btn-green" style="margin-top:15px">Buy / Long</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-options" class="view-container">
+        <div class="opt-header">BTC Options Chain (Simulated) - Expiring 24H</div>
+        <div style="overflow-y:auto; flex:1">
+            <table class="opt-table">
+                <thead>
+                    <tr>
+                        <th colspan="3" style="text-align:center; color:var(--green)">CALLS</th>
+                        <th style="width:80px">STRIKE</th>
+                        <th colspan="3" style="text-align:center; color:var(--red)">PUTS</th>
+                    </tr>
+                    <tr>
+                        <th>Bid</th><th>Ask</th><th>Vol</th>
+                        <th>Price</th>
+                        <th>Vol</th><th>Bid</th><th>Ask</th>
+                    </tr>
+                </thead>
+                <tbody id="optBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-earn" class="view-container" style="background:#0b0e11">
+        <div class="earn-container">
+            <h1 style="font-size:24px; margin-bottom:10px">Simple Earn</h1>
+            <p style="color:var(--text-muted); margin-bottom:30px">Get up to 20% APR on your idle assets.</p>
+            
+            <div id="earnList"></div>
+        </div>
+    </div>
+
+    <div id="view-edu" class="view-container">
+        <div style="padding:30px 30px 0 30px">
+            <h1 style="font-size:24px">Binance Academy</h1>
+            <p style="color:var(--text-muted)">Learn everything about crypto.</p>
+        </div>
+        <div class="edu-grid" id="eduList"></div>
     </div>
 
     <script>
-        // --- STATE ---
-        const COINS = ["BTC","ETH","SOL","BNB","DOGE","XRP","ADA","AVAX","DOT","MATIC"];
-        let activeSym = "BTC";
-        let prices = {}; 
-        let user = { name: "Guest", wallet: 10000, bots: [] };
-        let ws = null; // Ticker Socket
-        let depthWs = null; // Orderbook Socket
-
-        // --- 1. AUTH ---
-        function login() {
-            const name = document.getElementById('loginName').value;
-            if(name) {
-                user.name = name;
-                document.getElementById('authOverlay').style.display = 'none';
-                initApp();
-            }
-        }
-        function loginGuest() {
-            document.getElementById('authOverlay').style.display = 'none';
-            initApp();
-        }
-        function logout() { location.reload(); }
-
-        // --- 2. INIT ---
-        function initApp() {
-            document.getElementById('userName').innerText = user.name;
-            updateWallet();
-            renderMarkets();
-            loadChart(activeSym);
-            fetchNews();
-            fetchDex();
+        // --- ROUTING ---
+        function setView(view) {
+            // Hide all
+            document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
             
-            // Start Global Ticker Stream
-            ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
-            ws.onmessage = e => handleTicker(JSON.parse(e.data));
+            // Show selected
+            document.getElementById(`view-${view}`).classList.add('active');
+            document.getElementById(`nav-${view}`).classList.add('active');
 
-            // Start Specific Stream (Orderbook/Trades)
-            subscribeSymbol(activeSym);
-
-            setInterval(updateBots, 1000);
+            // Init specific components
+            if(view === 'spot') loadChart('tv_spot', 'BTCUSDT');
+            if(view === 'futures') loadChart('tv_futures', 'BTCUSDT.P');
+            if(view === 'options') renderOptions();
+            if(view === 'earn') renderEarn();
+            if(view === 'edu') renderEdu();
         }
 
-        // --- 3. MARKET DATA ---
-        function renderMarkets() {
-            const list = document.getElementById('marketList');
-            list.innerHTML = "";
-            COINS.forEach(sym => {
-                const row = document.createElement('div');
-                row.className = `coin-row ${sym===activeSym?'active':''}`;
-                row.id = `row-${sym}`;
-                row.onclick = () => switchCoin(sym);
-                row.innerHTML = `
-                    <div style="font-weight:600">${sym}/USDT</div>
-                    <div id="price-${sym}" style="font-family:'Binance Plex'">--</div>
-                `;
-                list.appendChild(row);
-            });
+        // --- DATA ENGINE ---
+        const COINS = ["BTC","ETH","BNB","SOL","XRP","ADA","DOGE","AVAX"];
+        let prices = {};
+
+        function init() {
+            startSocket();
+            renderLists();
+            loadChart('spotChart', 'BTCUSDT');
+            loadChart('futuresChart', 'BTCUSDT');
         }
 
-        function handleTicker(data) {
-            data.forEach(t => {
-                const s = t.s.replace('USDT','');
-                if(COINS.includes(s)) {
-                    prices[s] = parseFloat(t.c);
-                    const el = document.getElementById(`price-${s}`);
-                    if(el) {
-                        el.innerText = prices[s].toFixed(prices[s]<1?4:2);
-                        el.style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
+        function startSocket() {
+            const ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+            ws.onmessage = e => {
+                const data = JSON.parse(e.data);
+                data.forEach(t => {
+                    const s = t.s.replace('USDT','');
+                    if(COINS.includes(s)) {
+                        prices[s] = parseFloat(t.c);
+                        updatePrices(s, t);
                     }
-                    if(s === activeSym) {
-                        document.getElementById('activePrice').innerText = prices[s].toFixed(2);
-                        document.getElementById('midPrice').innerText = prices[s].toFixed(2);
-                        document.getElementById('activeChange').innerText = parseFloat(t.P).toFixed(2)+"%";
-                        document.getElementById('activeChange').style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
-                    }
-                }
-            });
-        }
-
-        function switchCoin(sym) {
-            document.getElementById(`row-${activeSym}`).classList.remove('active');
-            activeSym = sym;
-            document.getElementById(`row-${activeSym}`).classList.add('active');
-            document.getElementById('activePair').innerText = sym+"/USDT";
-            document.querySelector('.btn-buy').innerText = "BUY "+sym;
-            
-            loadChart(sym);
-            subscribeSymbol(sym);
-        }
-
-        function loadChart(s) {
-            document.getElementById('tv_chart').innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=BINANCE:${s}USDT&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC" style="width:100%; height:100%; border:none;"></iframe>`;
-        }
-
-        // --- 4. DEPTH & TRADES (REAL TIME) ---
-        function subscribeSymbol(sym) {
-            if(depthWs) depthWs.close();
-            const pair = sym.toLowerCase() + "usdt";
-            // Subscribe to Depth20 + Trade + AggTrade
-            depthWs = new WebSocket(`wss://stream.binance.com:9443/ws/${pair}@depth20/${pair}@trade`);
-            
-            depthWs.onmessage = e => {
-                const d = JSON.parse(e.data);
-                if(d.e === 'depthUpdate' || d.bids) renderOrderBook(d);
-                if(d.e === 'trade') renderTrade(d);
+                });
             };
         }
 
-        function renderOrderBook(d) {
-            // Binance sends 'bids' and 'asks' arrays
-            if(!d.bids) return; 
-            const asks = document.getElementById('asks');
-            const bids = document.getElementById('bids');
-            
-            // Simple render of top 8
-            asks.innerHTML = d.asks.slice(0,8).reverse().map(a => `
-                <div class="ob-row">
-                    <div class="ob-bg" style="width:${Math.random()*100}%; background:var(--red)"></div>
-                    <span class="text-red">${parseFloat(a[0]).toFixed(2)}</span>
-                    <span style="z-index:1">${parseFloat(a[1]).toFixed(3)}</span>
-                </div>
-            `).join('');
-
-            bids.innerHTML = d.bids.slice(0,8).map(b => `
-                <div class="ob-row">
-                    <div class="ob-bg" style="width:${Math.random()*100}%; background:var(--green)"></div>
-                    <span class="text-green">${parseFloat(b[0]).toFixed(2)}</span>
-                    <span style="z-index:1">${parseFloat(b[1]).toFixed(3)}</span>
-                </div>
-            `).join('');
-        }
-
-        function renderTrade(t) {
-            const list = document.getElementById('tradeList');
-            const row = document.createElement('div');
-            row.className = 'ob-row';
-            row.innerHTML = `
-                <span class="${t.m?'text-red':'text-green'}">${parseFloat(t.p).toFixed(2)}</span>
-                <span style="color:#ddd">${parseFloat(t.q).toFixed(4)}</span>
-                <span style="color:#666">${new Date(t.T).toLocaleTimeString().split(' ')[0]}</span>
-            `;
-            list.prepend(row);
-            if(list.children.length > 15) list.lastChild.remove();
-
-            // Whale Check
-            const val = parseFloat(t.p) * parseFloat(t.q);
-            if(val > 50000) logWhale(t, val);
-        }
-
-        function logWhale(t, val) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${new Date(t.T).toLocaleTimeString()}</td>
-                <td>${activeSym}</td>
-                <td class="${t.m?'text-red':'text-green'}">${t.m?'SELL':'BUY'}</td>
-                <td>$${Math.floor(val/1000)}k</td>
-                <td>${parseFloat(t.p).toFixed(2)}</td>
-            `;
-            document.getElementById('whaleTable').prepend(row);
-        }
-
-        // --- 5. BOT & TRADE LOGIC ---
-        function setMode(mode, btn) {
-            document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('manualForm').style.display = mode==='MANUAL'?'block':'none';
-            document.getElementById('botForm').style.display = mode==='BOT'?'block':'none';
-        }
-
-        function fillAI() {
-            const p = prices[activeSym];
-            document.getElementById('botLow').value = (p*0.9).toFixed(2);
-            document.getElementById('botHigh').value = (p*1.1).toFixed(2);
-            document.getElementById('botInv').value = 1000;
-        }
-
-        function createBot() {
-            const invest = parseFloat(document.getElementById('botInv').value);
-            if(invest > user.wallet) return alert("Funds low");
-            
-            user.wallet -= invest;
-            updateWallet();
-            
-            user.bots.push({
-                id: Date.now(),
-                pair: activeSym,
-                range: `${document.getElementById('botLow').value} - ${document.getElementById('botHigh').value}`,
-                invest: invest,
-                profit: 0
+        function updatePrices(sym, t) {
+            // Update all potential price elements
+            const els = document.querySelectorAll(`.price-${sym}`);
+            els.forEach(el => {
+                el.innerText = parseFloat(t.c).toFixed(2);
+                el.style.color = parseFloat(t.P)>=0 ? 'var(--green)' : 'var(--red)';
             });
-            renderBots();
         }
 
-        function updateBots() {
-            user.bots.forEach(b => {
-                if(Math.random() > 0.8) b.profit += b.invest * 0.0002;
+        function renderLists() {
+            const spotL = document.getElementById('spotList');
+            const futL = document.getElementById('futuresList');
+            
+            COINS.forEach(sym => {
+                const html = `
+                    <div class="coin-row">
+                        <div style="font-weight:600">${sym}/USDT</div>
+                        <div class="price-${sym}">--</div>
+                    </div>
+                `;
+                spotL.innerHTML += html;
+                futL.innerHTML += html;
             });
-            renderBots();
         }
 
-        function renderBots() {
-            const tb = document.getElementById('botTable');
-            tb.innerHTML = user.bots.map((b,i) => `
-                <tr>
-                    <td>${new Date(b.id).toLocaleTimeString()}</td>
-                    <td>${b.pair}</td>
-                    <td>Grid</td>
-                    <td>$${b.invest}</td>
-                    <td class="text-green">+$${b.profit.toFixed(2)}</td>
-                    <td class="text-green">+$${b.profit.toFixed(2)}</td>
-                    <td><button onclick="stopBot(${i})" style="color:red; background:none; border:none; cursor:pointer">Stop</button></td>
-                </tr>
-            `).join('');
+        function loadChart(id, pair) {
+            // Prevent reload if already there
+            if(document.getElementById(id).innerHTML !== "") return;
+            
+            document.getElementById(id).innerHTML = `
+                <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_1&symbol=BINANCE:${pair}&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC" 
+                style="width:100%; height:100%; border:none;"></iframe>`;
         }
 
-        function stopBot(i) {
-            const b = user.bots[i];
-            user.wallet += (b.invest + b.profit);
-            user.bots.splice(i, 1);
-            updateWallet();
-            renderBots();
-        }
-
-        function placeOrder() {
-            const amt = parseFloat(document.getElementById('spotAmt').value);
-            if(amt && amt <= user.wallet) {
-                user.wallet -= amt;
-                updateWallet();
-                alert(`Bought $${amt} of ${activeSym}`);
-            } else {
-                alert("Invalid Amount");
+        // --- OPTIONS RENDERER ---
+        function renderOptions() {
+            const tb = document.getElementById('optBody');
+            tb.innerHTML = "";
+            let strike = 50000; // Base Strike
+            
+            for(let i=0; i<15; i++) {
+                const callBid = (Math.random()*500).toFixed(1);
+                const putBid = (Math.random()*500).toFixed(1);
+                
+                tb.innerHTML += `
+                    <tr>
+                        <td class="call-side">${callBid}</td><td>${(callBid*1.02).toFixed(1)}</td><td style="color:#666">${Math.floor(Math.random()*100)}</td>
+                        <td class="strike-cell">${strike}</td>
+                        <td style="color:#666">${Math.floor(Math.random()*100)}</td><td class="put-side">${putBid}</td><td>${(putBid*1.02).toFixed(1)}</td>
+                    </tr>
+                `;
+                strike += 250;
             }
         }
 
-        function updateWallet() {
-            document.getElementById('walletVal').innerText = `$${user.wallet.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+        // --- EARN RENDERER ---
+        function renderEarn() {
+            const list = document.getElementById('earnList');
+            const products = [
+                { coin: "USDT", apy: "12.5%", type: "Flexible" },
+                { coin: "BTC", apy: "3.2%", type: "Protected" },
+                { coin: "ETH", apy: "4.5%", type: "Staking" },
+                { coin: "SOL", apy: "7.8%", type: "Staking" },
+                { coin: "BNB", apy: "2.1%", type: "Vault" }
+            ];
+            
+            list.innerHTML = products.map(p => `
+                <div class="earn-card">
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <div style="width:32px; height:32px; background:#333; border-radius:50%"></div>
+                        <div>
+                            <div style="font-weight:700; font-size:14px">${p.coin}</div>
+                            <div class="earn-badge">${p.type}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="apy-text">${p.apy}</div>
+                        <div style="font-size:11px; color:#888">APR</div>
+                    </div>
+                    <button class="btn-green" style="width:100px">Subscribe</button>
+                </div>
+            `).join('');
         }
 
-        // --- 6. EXTRAS ---
-        function switchTab(t, el) {
-            document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
-            el.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('show'));
-            document.getElementById(`tab-${t}`).classList.add('show');
+        // --- ACADEMY RENDERER ---
+        function renderEdu() {
+            const list = document.getElementById('eduList');
+            const articles = [
+                { title: "What is Bitcoin?", cat: "Beginner" },
+                { title: "How to Trade Futures", cat: "Trading" },
+                { title: "DeFi Explained", cat: "Blockchain" },
+                { title: "What is a Wallet?", cat: "Security" },
+                { title: "Technical Analysis 101", cat: "Trading" },
+                { title: "History of Ethereum", cat: "Altcoins" }
+            ];
+            
+            list.innerHTML = articles.map(a => `
+                <div class="edu-card">
+                    <div class="edu-img">🎓</div>
+                    <div class="edu-content">
+                        <div class="edu-meta">${a.cat} • 5 min read</div>
+                        <div class="edu-title">${a.title}</div>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        async function fetchNews() {
-            const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss');
-            const d = await r.json();
-            document.getElementById('newsTicker').innerText = d.items.map(i => "🔥 "+i.title).join("   |   ");
-        }
+        // Start
+        init();
 
-        async function fetchDex() {
-            const r = await fetch('https://api.coingecko.com/api/v3/search/trending');
-            const d = await r.json();
-            document.getElementById('dexTable').innerHTML = d.coins.map(c => `<tr>
-                <td>#${c.item.market_cap_rank}</td>
-                <td><img src="${c.item.thumb}" width="15"> ${c.item.symbol}</td>
-                <td>${c.item.data.price_change_percentage_24h.usd.toFixed(2)}%</td>
-                <td><a href="#" style="color:var(--primary)">View</a></td>
-            </tr>`).join('');
-        }
-
-        // START
-        if(user.name === 'Guest') initApp(); // Auto start guest for demo check
     </script>
 </body>
 </html>
