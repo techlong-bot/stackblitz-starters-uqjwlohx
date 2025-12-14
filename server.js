@@ -4,27 +4,39 @@ const app = express();
 
 app.use(express.static('public'));
 
-app.get('/market-data', async (req, res) => {
+// --- CACHE STORAGE ---
+let cache = {
+    data: null,      // Stores the list of coins
+    lastFetch: 0     // Stores the time (in ms) when we last fetched
+};
+
+// Function to fetch data with protection (Cache)
+async function getCachedMarketData() {
+    const now = Date.now();
+    const ONE_MINUTE = 60 * 1000; 
+
+    // 1. If we have data and it is less than 1 minute old, return it!
+    if (cache.data && (now - cache.lastFetch < ONE_MINUTE)) {
+        console.log("Serving from Cache (No Binance request)");
+        return cache.data;
+    }
+
+    // 2. Otherwise, fetch new data from Binance
+    console.log("Fetching new data from Binance...");
     try {
-        // 1. Get 24hr Ticker data from Binance (Public API, no key needed)
         const response = await axios.get('https://api.binance.com/api/v3/ticker/24hr');
         const allCoins = response.data;
 
-        // 2. Filter & Sort the data
-        // - We only want pairs ending in 'USDT' (like BTCUSDT)
-        // - We sort by 'quoteVolume' to get the most traded coins (Top 25)
+        // Process the data
         const topCoins = allCoins
             .filter(coin => coin.symbol.endsWith('USDT'))
             .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
             .slice(0, 25);
 
-        // 3. Process the data for our website
         const enrichedData = topCoins.map(coin => {
-            // Clean up symbol: "BTCUSDT" -> "BTC"
             const shortSymbol = coin.symbol.replace('USDT', '');
             const priceChange = parseFloat(coin.priceChangePercent);
             
-            // LOGIC: Same Smart Signal Logic
             let netflow = 0;
             let signal = "NEUTRAL";
             let signalColor = "gray";
@@ -42,11 +54,10 @@ app.get('/market-data', async (req, res) => {
             }
 
             return {
-                name: shortSymbol, // Binance doesn't give full names, so we use BTC, ETH, etc.
-                symbol: coin.symbol, // BTCUSDT
+                name: shortSymbol, 
+                symbol: coin.symbol, 
                 price: parseFloat(coin.lastPrice),
                 change24h: priceChange,
-                // Trick to get coin icons using the symbol name
                 image: `https://assets.coincap.io/assets/icons/${shortSymbol.toLowerCase()}@2x.png`,
                 netflow: netflow,
                 signal: signal,
@@ -54,14 +65,30 @@ app.get('/market-data', async (req, res) => {
             };
         });
 
-        res.json(enrichedData);
+        // Save to cache
+        cache.data = enrichedData;
+        cache.lastFetch = now;
+        
+        return enrichedData;
 
     } catch (error) {
-        console.error("Error fetching Binance data:", error.message);
-        res.status(500).json({ error: "Failed to fetch data" });
+        // If Binance blocks us, return old data if we have it
+        if (cache.data) return cache.data;
+        throw error;
+    }
+}
+
+app.get('/market-data', async (req, res) => {
+    try {
+        const data = await getCachedMarketData();
+        res.json(data);
+    } catch (error) {
+        console.error("Error fetching data:", error.message);
+        // Send a friendly error to the website instead of crashing
+        res.status(500).json({ error: "Market data temporarily unavailable. Try again in 1 min." });
     }
 });
 
 app.listen(3000, () => {
-    console.log("Connected to Binance API. Server running...");
+    console.log("Smart Server running. Cache enabled.");
 });
