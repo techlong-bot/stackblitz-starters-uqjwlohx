@@ -1,24 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Titan Bot Commander</title>
+    <meta charset="UTF-8">
+    <title>ENGINE</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        :root { --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #c9d1d9; --accent: #58a6ff; --green: #2ea043; --red: #ff7b72; --gold: #e3b341; }
+        :root { 
+            --bg: #0d1117; 
+            --panel: #161b22; 
+            --border: #30363d; 
+            --text: #c9d1d9; 
+            --accent: #58a6ff; 
+            --green: #2ea043; 
+            --red: #ff7b72; 
+            --gold: #e3b341;
+        }
         body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; margin: 0; padding: 10px; overflow-x: hidden; }
 
-        /* HEADER & GRID */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
-        h1 { margin: 0; color: var(--accent); font-size: 18px; letter-spacing: 1px; }
-        .grid { display: grid; grid-template-columns: 260px 1fr 260px; gap: 15px; height: 85vh; }
-        
+        /* BRANDING */
+        .brand-header { text-align: center; margin: 15px 0 25px 0; }
+        h1 { margin: 0; font-size: 24px; letter-spacing: 2px; color: var(--text); }
+        .sys-badge { font-size:10px; color:#30363d; border:1px solid #30363d; padding:2px 6px; border-radius:4px; vertical-align:middle; margin-left:10px; font-weight:bold; }
+
+        /* GRID SYSTEM */
+        .grid { display: grid; grid-template-columns: 280px 1fr 280px; gap: 15px; max-width: 1900px; margin: 0 auto; height: 85vh; }
+        @media (max-width: 1400px) { .grid { grid-template-columns: 1fr 1fr; height: auto; } .sidebar-right { grid-column: span 2; } }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .sidebar-right { grid-column: span 1; } }
+
         /* PANELS */
         .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; }
+        .panel-short { height: 300px; }
         .p-head { padding: 8px 12px; background: #010409; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; }
-        .scroll { overflow-y: auto; flex: 1; }
+        .scroll-box { overflow-y: auto; flex: 1; scrollbar-width: thin; }
 
-        /* BOT CONTROLS */
-        .bot-status { padding: 10px; background: #21262d; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        /* LIVE ELEMENTS */
+        .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 5px var(--green); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        .flash-green { animation: flashG 0.5s; }
+        .flash-red { animation: flashR 0.5s; }
+        @keyframes flashG { 0% { background: rgba(46, 160, 67, 0.2); } 100% { background: transparent; } }
+        @keyframes flashR { 0% { background: rgba(255, 123, 114, 0.2); } 100% { background: transparent; } }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: right; padding: 8px; color: #8b949e; background: #0d1117; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border); }
+        th:first-child { text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); text-align: right; font-feature-settings: "tnum"; }
+        td:first-child { text-align: left; }
+        tr:hover { background: #21262d; cursor: pointer; }
+
+        /* MODULES */
+        .news-item { padding: 8px; border-bottom: 1px solid var(--border); font-size: 11px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .news-item:hover { color: var(--accent); }
+        
+        .bot-control { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .4s; border-radius: 20px; }
@@ -26,84 +62,81 @@
         input:checked + .slider { background-color: var(--green); }
         input:checked + .slider:before { transform: translateX(14px); }
 
-        /* LOGS */
-        .log-item { padding: 6px 10px; border-bottom: 1px solid #21262d; font-size: 11px; font-family: monospace; border-left: 3px solid transparent; }
-        .log-buy { border-left-color: var(--green); background: rgba(46,160,67,0.05); }
-        .log-sell { border-left-color: var(--red); background: rgba(255,123,114,0.05); }
+        .log-item { padding: 5px 10px; font-size: 10px; border-bottom: 1px solid #21262d; font-family: monospace; }
+        .log-buy { color: var(--green); } .log-sell { color: var(--red); }
 
-        /* MAIN TABLE */
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { text-align: right; padding: 8px; color: #8b949e; background: #0d1117; position: sticky; top: 0; }
-        th:first-child { text-align: left; }
-        td { padding: 8px; border-bottom: 1px solid var(--border); text-align: right; }
-        td:first-child { text-align: left; }
-        tr:hover { background: #21262d; cursor: pointer; }
-
-        /* UTILS */
         .btn { background: var(--border); color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; }
         .btn:hover { background: var(--accent); }
         .green-txt { color: var(--green); } .red-txt { color: var(--red); }
-        .score-bar { width: 50px; height: 4px; background: #30363d; display: inline-block; border-radius: 2px; }
-        .score-fill { height: 100%; }
 
-        /* CHART MODAL */
+        /* MODAL */
         #chartModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; }
-        .modal-content { width: 95%; height: 90%; margin: 2% auto; background: var(--panel); display: flex; flex-direction: column; }
+        .modal-content { width: 95%; height: 90%; margin: 2% auto; background: var(--panel); display: flex; flex-direction: column; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <h1>⚡ TITAN <span style="color:#8b949e">//</span> AUTO-PILOT</h1>
-        <div style="display:flex; gap:20px; font-size:13px">
-            <div>CASH: <b id="cashVal" class="green-txt">$10,000</b></div>
-            <div>EQUITY: <b id="equityVal">$10,000</b></div>
-            <div>PNL: <b id="pnlVal" style="color:#8b949e">0.00%</b></div>
-        </div>
+    <div class="brand-header">
+        <h1>/// ENGINE <span class="sys-badge">SYSTEM ONLINE</span></h1>
+    </div>
+
+    <div style="max-width:1900px; margin:0 auto 15px auto; display:flex; gap:20px; font-size:12px; padding:0 10px;">
+        <div>MARKET SENTIMENT: <b id="fgValue">--</b></div>
+        <div>CASH: <b id="walletCash" class="green-txt">$10,000</b></div>
+        <div>EQUITY: <b id="walletEquity">$10,000</b></div>
     </div>
 
     <div class="grid">
         
-        <div class="panel">
-            <div class="p-head">
-                <span>🤖 BOT CONTROLS</span>
-                <span id="botStateText" style="color:#8b949e">OFFLINE</span>
+        <div style="display:flex; flex-direction:column; gap:15px">
+            
+            <div class="panel">
+                <div class="p-head">
+                    <span>🤖 AUTO-PILOT</span>
+                    <span id="botStatus" style="color:#8b949e">STANDBY</span>
+                </div>
+                <div class="bot-control">
+                    <span style="font-size:11px">MASTER SWITCH</span>
+                    <label class="switch">
+                        <input type="checkbox" id="botToggle" onchange="toggleBot()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="scroll-box" id="botLog" style="height:150px; background:#0b0e11;">
+                    <div style="padding:10px; text-align:center; color:#8b949e; font-size:10px">System Ready...</div>
+                </div>
+            </div>
+
+            <div class="panel" style="flex:1">
+                <div class="p-head"><span>📰 WIRE FEED</span><button class="btn" onclick="fetchNews()">↻</button></div>
+                <div class="scroll-box" id="newsFeed"></div>
             </div>
             
-            <div class="bot-status">
-                <span style="font-size:12px"><b>MASTER SWITCH</b><br><span style="font-size:10px; color:#8b949e">Auto-Trade High Scores</span></span>
-                <label class="switch">
-                    <input type="checkbox" id="botToggle" onchange="toggleBot()">
-                    <span class="slider"></span>
-                </label>
+            <div class="panel" style="height:200px">
+                <div class="p-head"><span>⚖️ ARBITRAGE</span><span class="live-dot"></span></div>
+                <div class="scroll-box" id="arbFeed"></div>
             </div>
 
-            <div style="padding:10px; font-size:11px; color:#8b949e; border-bottom:1px solid var(--border)">
-                STRATEGY: <b style="color:#c9d1d9">MOMENTUM SCALPER</b><br>
-                • BUY: Score > 80 (Strong Buy)<br>
-                • SELL: Score < 40 OR Profit > 1.5%
-            </div>
-
-            <div class="p-head">📜 EXECUTION LOG</div>
-            <div class="scroll" id="botLog">
-                <div style="padding:10px; text-align:center; color:#8b949e; font-size:11px">Waiting for signals...</div>
-            </div>
         </div>
 
         <div class="panel">
             <div class="p-head">
-                <span>MARKET SCANNER (Top 25)</span>
-                <button class="btn" onclick="init()">REFRESH</button>
+                <span>MARKET DATA (BINANCE STREAM)</span>
+                <div style="display:flex; gap:5px">
+                    <button class="btn" onclick="setMode('TOP')">TOP 25</button>
+                    <button class="btn" onclick="setMode('GEM')">💎 GEMS</button>
+                    <button class="btn" onclick="setMode('PORTFOLIO')">💼 HOLDINGS</button>
+                </div>
             </div>
-            <div class="scroll">
+            <div class="scroll-box">
                 <table id="mainTable">
                     <thead>
                         <tr>
                             <th>Asset</th>
-                            <th>Price</th>
+                            <th>Price (Live)</th>
                             <th>24h %</th>
-                            <th>Titan Score</th>
-                            <th>Holdings</th>
+                            <th>RSI</th>
+                            <th>Score</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -111,21 +144,25 @@
             </div>
         </div>
 
-        <div class="panel">
-            <div class="p-head">💼 OPEN POSITIONS</div>
-            <div class="scroll" id="positionsPanel" style="max-height: 200px; border-bottom: 1px solid var(--border)">
-                <div style="padding:10px; text-align:center; color:#8b949e; font-size:11px">No active trades</div>
-            </div>
+        <div class="sidebar-right" style="display:flex; flex-direction:column; gap:15px">
             
-            <div class="p-head">🚨 WHALE RADAR (>$50k)</div>
-            <div class="scroll" id="whaleFeed"></div>
+            <div class="panel" style="flex:1">
+                <div class="p-head"><span>🚨 WHALE RADAR (>$50k)</span><span class="live-dot"></span></div>
+                <div class="scroll-box" id="whaleFeed" style="font-family:monospace;"></div>
+            </div>
+
+            <div class="panel" style="height:250px">
+                <div class="p-head"><span>🦄 DEX TRENDING</span><button class="btn" onclick="fetchDex()">↻</button></div>
+                <div class="scroll-box" id="dexFeed"></div>
+            </div>
+
         </div>
 
     </div>
 
     <div id="chartModal">
         <div class="modal-content">
-            <div class="p-head" style="height:30px">
+            <div class="p-head" style="height:30px; background:#0d1117; border-bottom:1px solid #30363d">
                 <span id="chartTitle">CHART</span>
                 <button class="btn" onclick="document.getElementById('chartModal').style.display='none'">CLOSE</button>
             </div>
@@ -134,42 +171,103 @@
     </div>
 
     <script>
-        // --- CONFIG ---
-        const COINS = ["BTC","ETH","SOL","BNB","XRP","DOGE","ADA","AVAX","TRX","DOT","LINK","MATIC","LTC","SHIB","UNI","ATOM","XLM","NEAR","APT","OP"];
-        const TRADE_SIZE = 1000; // Bot invests $1000 per trade
-        
-        // --- STATE ---
-        let marketData = [];
-        let wallet = { cash: 10000, positions: {} }; // { "BTC": { amount: 0.1, entry: 50000 } }
-        let botActive = false;
+        // --- CONFIGURATION ---
+        // Top 25 Coins (Safe)
+        const TOP_COINS = ["BTC","ETH","SOL","BNB","XRP","DOGE","ADA","AVAX","TRX","DOT","LINK","MATIC","LTC","SHIB","UNI","ATOM","XLM","NEAR","APT","OP","ARB","QNT","FIL","HBAR","VET"];
+        let activeList = TOP_COINS;
+        let marketData = {}; // Stores RSI, Score, Meta
+        let wallet = { cash: 10000, positions: {} };
+        let botEnabled = false;
         let socket = null;
 
-        // --- 1. CORE LOOPS ---
+        // --- 1. INITIALIZATION ---
         async function init() {
-            try {
-                // Get Prices + Sparklines for Math
-                const ids = "bitcoin,ethereum,solana,binancecoin,ripple,dogecoin,cardano,avalanche-2,tron,polkadot,chainlink,matic-network,litecoin,shiba-inu,uniswap,cosmos,stellar,near,aptos,optimism";
-                const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&sparkline=true`);
-                const data = await res.json();
-                
-                marketData = data.map(c => {
-                    const rsi = calcRSI(c.sparkline_in_7d.price);
-                    const score = calcScore(c, rsi);
-                    return { ...c, symbol: c.symbol.toUpperCase(), rsi, score };
-                });
+            // Load Wallet
+            const savedWallet = localStorage.getItem('titanWallet');
+            if(savedWallet) wallet = JSON.parse(savedWallet);
+            updateWalletUI();
 
-                renderTable();
-                updateWalletUI();
-                
-                if(botActive) runBotLogic(); // Check for trades
-                
-                // Start live feeds if not already running
-                if(!socket) startLiveFeed();
-
-            } catch(e) { console.log(e); }
+            // Fetch Meta Data (Images/Names) & Sparklines for Math
+            await fetchMarketMeta(activeList);
+            
+            // Start Systems
+            fetchNews();
+            fetchDex();
+            fetchSentiment();
+            startBinanceStream();
+            startWhaleStream();
+            startArbSim();
         }
 
-        // --- 2. MATH ENGINE ---
+        async function fetchMarketMeta(symbols) {
+            // Convert symbols to IDs for CoinGecko
+            // Note: In production, map Symbols -> IDs more robustly. Using a common list here.
+            // We pull a generic large list to catch most.
+            const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=true`);
+            const data = await res.json();
+            
+            // Process Data
+            data.forEach(c => {
+                const sym = c.symbol.toUpperCase();
+                // RSI Calc
+                const rsi = calcRSI(c.sparkline_in_7d.price);
+                const score = calcScore(c.price_change_percentage_24h, rsi);
+                
+                marketData[sym] = {
+                    image: c.image,
+                    rsi: rsi,
+                    score: score,
+                    price: c.current_price, // Fallback price
+                    change: c.price_change_percentage_24h // Fallback change
+                };
+            });
+            
+            buildTableRows();
+        }
+
+        // --- 2. WEBSOCKET ENGINE (SPEED) ---
+        function startBinanceStream() {
+            if(socket) socket.close();
+            // Subscribe to all MiniTickers
+            socket = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+            
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                data.forEach(t => {
+                    const sym = t.s.replace('USDT','');
+                    if(marketData[sym]) {
+                        updateRow(sym, parseFloat(t.c), parseFloat(t.P || 0)); // t.P is 24h% change in miniTicker
+                        
+                        // Bot Logic Trigger
+                        if(botEnabled) checkBotLogic(sym, parseFloat(t.c));
+                    }
+                });
+            };
+        }
+
+        function updateRow(sym, price, change) {
+            const row = document.getElementById(`row-${sym}`);
+            if(!row) return; // Item not in current view
+
+            // Update Cells
+            const priceCell = document.getElementById(`p-${sym}`);
+            const chgCell = document.getElementById(`c-${sym}`);
+            
+            // Flash Effect
+            const oldPrice = parseFloat(priceCell.innerText.replace('$','').replace(',',''));
+            if(price > oldPrice) { row.classList.remove('flash-red'); row.classList.add('flash-green'); }
+            if(price < oldPrice) { row.classList.remove('flash-green'); row.classList.add('flash-red'); }
+            
+            priceCell.innerText = `$${price < 1 ? price.toFixed(4) : price.toLocaleString()}`;
+            chgCell.innerText = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+            chgCell.className = change >= 0 ? 'green-txt' : 'red-txt';
+
+            // Update internal state
+            marketData[sym].price = price;
+            marketData[sym].change = change;
+        }
+
+        // --- 3. MATH ENGINE ---
         function calcRSI(prices) {
             if(!prices || prices.length < 15) return 50;
             let gains=0, losses=0;
@@ -181,174 +279,184 @@
             return 100 - (100/(1+(gains/losses)));
         }
 
-        function calcScore(coin, rsi) {
+        function calcScore(change, rsi) {
             let s = 50;
-            if(rsi < 30) s += 25; // Oversold
-            if(rsi > 70) s -= 25; // Overbought
-            if(coin.price_change_percentage_24h > 2) s += 15; // Momentum
-            if(coin.price_change_percentage_24h < -2) s -= 15; // Dump
-            return Math.min(100, Math.max(0, s));
+            if(rsi < 30) s += 20; // Oversold
+            if(rsi > 70) s -= 20; // Overbought
+            if(change > 5) s += 15; // Momentum
+            if(change < -5) s -= 15; // Dump
+            return Math.max(0, Math.min(100, s));
         }
 
-        // --- 3. BOT LOGIC (AUTO-PILOT) ---
-        function toggleBot() {
-            botActive = document.getElementById('botToggle').checked;
-            const status = document.getElementById('botStateText');
-            status.innerText = botActive ? "SCANNING..." : "OFFLINE";
-            status.style.color = botActive ? "#2ea043" : "#8b949e";
-            if(botActive) log("Bot Activated. Searching for signals...");
-        }
-
-        function runBotLogic() {
-            marketData.forEach(coin => {
-                const sym = coin.symbol;
-                const price = coin.current_price;
-                const score = coin.score;
-                
-                // 1. BUY LOGIC
-                if (!wallet.positions[sym] && score >= 80 && wallet.cash >= TRADE_SIZE) {
-                    executeTrade('BUY', sym, price, TRADE_SIZE);
-                }
-
-                // 2. SELL LOGIC (Take Profit or Stop Loss)
-                if (wallet.positions[sym]) {
-                    const pos = wallet.positions[sym];
-                    const pnlPct = ((price - pos.entry) / pos.entry) * 100;
-                    
-                    // Sell if: Score drops (Weakness) OR Profit > 1.5% OR Stop Loss < -2%
-                    if (score < 40 || pnlPct > 1.5 || pnlPct < -2) {
-                        executeTrade('SELL', sym, price, 0); // Sell all
-                    }
-                }
-            });
-        }
-
-        function executeTrade(type, sym, price, usdAmount) {
-            if (type === 'BUY') {
-                const amount = usdAmount / price;
-                wallet.cash -= usdAmount;
-                wallet.positions[sym] = { amount: amount, entry: price };
-                log(`BUY ${sym} @ $${price} (Score: High)`, 'buy');
-            } else {
-                const pos = wallet.positions[sym];
-                const revenue = pos.amount * price;
-                const profit = revenue - (pos.amount * pos.entry);
-                wallet.cash += revenue;
-                delete wallet.positions[sym];
-                
-                const pnlStr = profit >= 0 ? `+$${profit.toFixed(2)}` : `-$${Math.abs(profit).toFixed(2)}`;
-                log(`SELL ${sym} @ $${price} | PnL: ${pnlStr}`, profit >= 0 ? 'buy' : 'sell');
-            }
-            updateWalletUI();
-            renderTable();
-        }
-
-        function log(msg, type='') {
-            const box = document.getElementById('botLog');
-            const div = document.createElement('div');
-            div.className = `log-item ${type === 'buy' ? 'log-buy' : type === 'sell' ? 'log-sell' : ''}`;
-            const time = new Date().toLocaleTimeString().split(' ')[0];
-            div.innerText = `[${time}] ${msg}`;
-            box.prepend(div);
-        }
-
-        // --- 4. UI UPDATES ---
-        function renderTable() {
+        // --- 4. RENDER LOGIC ---
+        function buildTableRows() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
             
-            marketData.sort((a,b) => b.score - a.score); // Best scores top
+            activeList.forEach(sym => {
+                const d = marketData[sym];
+                if(!d) return;
 
-            marketData.forEach(c => {
-                const color = c.score >= 80 ? 'green-txt' : c.score <= 40 ? 'red-txt' : '#8b949e';
-                const pos = wallet.positions[c.symbol];
-                
                 const tr = document.createElement('tr');
-                tr.onclick = () => openChart(c.symbol);
+                tr.id = `row-${sym}`;
+                tr.onclick = () => openChart(sym);
+                
+                // Color Logic
+                let scoreColor = '#8b949e';
+                if(d.score >= 75) scoreColor = '#2ea043';
+                if(d.score <= 35) scoreColor = '#ff7b72';
+
                 tr.innerHTML = `
                     <td>
                         <div style="display:flex; align-items:center; gap:8px">
-                            <img src="${c.image}" style="width:20px; border-radius:50%">
-                            <b>${c.symbol}</b>
+                            <img src="${d.image}" style="width:20px; border-radius:50%">
+                            <b>${sym}</b>
                         </div>
                     </td>
-                    <td>$${c.current_price.toLocaleString()}</td>
-                    <td class="${c.price_change_percentage_24h>=0?'green-txt':'red-txt'}">${c.price_change_percentage_24h.toFixed(2)}%</td>
-                    <td>
-                        <div class="score-bar"><div class="score-fill" style="width:${c.score}%; background:${c.score>=80?'#2ea043':c.score<=40?'#ff7b72':'#8b949e'}"></div></div>
-                        <span style="font-size:10px; margin-left:5px; color:${color}">${c.score}</span>
-                    </td>
-                    <td style="color:#e3b341; font-weight:bold">${pos ? 'HELD' : ''}</td>
+                    <td id="p-${sym}">$${d.price.toLocaleString()}</td>
+                    <td id="c-${sym}" class="${d.change>=0?'green-txt':'red-txt'}">${d.change.toFixed(2)}%</td>
+                    <td style="color:${d.rsi>70?'#ff7b72':d.rsi<30?'#2ea043':'#8b949e'}">${d.rsi.toFixed(0)}</td>
+                    <td style="font-weight:bold; color:${scoreColor}">${d.score}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function updateWalletUI() {
-            // Cash
-            document.getElementById('cashVal').innerText = `$${wallet.cash.toFixed(0)}`;
-            
-            // Calculate Equity
-            let holdingsVal = 0;
-            const positionsBox = document.getElementById('positionsPanel');
-            positionsBox.innerHTML = "";
-
-            Object.keys(wallet.positions).forEach(sym => {
-                const pos = wallet.positions[sym];
-                // Find current price
-                const coin = marketData.find(c => c.symbol === sym);
-                const currPrice = coin ? coin.current_price : pos.entry;
-                const val = pos.amount * currPrice;
-                holdingsVal += val;
-
-                const pnl = ((currPrice - pos.entry) / pos.entry) * 100;
-                
-                // Add to panel
-                const div = document.createElement('div');
-                div.style.padding = "10px";
-                div.style.borderBottom = "1px solid #30363d";
-                div.style.fontSize = "12px";
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between">
-                        <b>${sym}</b>
-                        <span style="color:${pnl>=0?'#2ea043':'#ff7b72'}">${pnl.toFixed(2)}%</span>
-                    </div>
-                    <div style="color:#8b949e; font-size:11px">$${val.toFixed(2)}</div>
-                `;
-                positionsBox.appendChild(div);
-            });
-
-            const total = wallet.cash + holdingsVal;
-            const totalPnl = ((total - 10000) / 10000) * 100;
-            
-            document.getElementById('equityVal').innerText = `$${total.toFixed(0)}`;
-            document.getElementById('pnlVal').innerText = `${totalPnl > 0 ? '+' : ''}${totalPnl.toFixed(2)}%`;
-            document.getElementById('pnlVal').className = totalPnl >= 0 ? 'green-txt' : 'red-txt';
+        function setMode(mode) {
+            if(mode === 'TOP') activeList = TOP_COINS;
+            if(mode === 'PORTFOLIO') activeList = Object.keys(wallet.positions);
+            if(mode === 'GEM') {
+                // In a real app, you'd fetch Trending IDs here. For demo, we insert volatile memes.
+                activeList = ["PEPE","WIF","BONK","FLOKI","SHIB","DOGE","ORDI","SATS","MEME"];
+                fetchMarketMeta(activeList); // Refetch meta for new list
+                return;
+            }
+            buildTableRows();
         }
 
-        // --- 5. LIVE FEEDS ---
-        function startLiveFeed() {
-            // Binance WebSocket for Whales + Ticker
-            // Using a simple ticker stream to keep prices fresh between polling
-            const streams = "btcusdt@trade/ethusdt@trade/solusdt@trade/!miniTicker@arr";
-            socket = new WebSocket(`wss://stream.binance.com:9443/ws/${streams}`);
-            
-            socket.onmessage = (e) => {
-                const d = JSON.parse(e.data);
+        // --- 5. BOT ENGINE ---
+        function toggleBot() {
+            botEnabled = document.getElementById('botToggle').checked;
+            document.getElementById('botStatus').innerText = botEnabled ? "SCANNING..." : "STANDBY";
+            document.getElementById('botStatus').style.color = botEnabled ? "#2ea043" : "#8b949e";
+        }
+
+        function checkBotLogic(sym, price) {
+            const d = marketData[sym];
+            if(!d) return;
+
+            // BUY SIGNAL: High Score + No Position + Cash > 1000
+            if(!wallet.positions[sym] && d.score >= 80 && wallet.cash > 1000) {
+                trade('BUY', sym, price, 1000);
+            }
+
+            // SELL SIGNAL: Low Score OR Take Profit (+2%) OR Stop Loss (-2%)
+            if(wallet.positions[sym]) {
+                const pos = wallet.positions[sym];
+                const pnl = (price - pos.avg) / pos.avg * 100;
                 
-                // Whale Logic
-                if(d.e === 'trade') {
-                    const usd = parseFloat(d.p) * parseFloat(d.q);
-                    if(usd > 50000) {
-                        const box = document.getElementById('whaleFeed');
-                        const div = document.createElement('div');
-                        div.className = "log-item";
-                        div.innerHTML = `<span class="${d.m?'red-txt':'green-txt'}">${d.s.replace('USDT','')} Whale: $${Math.floor(usd/1000)}k</span>`;
-                        box.prepend(div);
-                        if(box.childElementCount > 20) box.lastChild.remove();
-                    }
+                if(d.score < 40 || pnl > 2 || pnl < -2) {
+                    trade('SELL', sym, price, 0); // Sell All
                 }
-            };
+            }
+        }
+
+        function trade(type, sym, price, amountUSD) {
+            const logBox = document.getElementById('botLog');
+            const div = document.createElement('div');
+            div.className = "log-item";
+            
+            if(type === 'BUY') {
+                const amt = amountUSD / price;
+                wallet.cash -= amountUSD;
+                wallet.positions[sym] = { amount: amt, avg: price };
+                div.innerHTML = `<span class="log-buy">BUY ${sym}</span> @ $${price} (Score: ${marketData[sym].score})`;
+            } else {
+                const pos = wallet.positions[sym];
+                const val = pos.amount * price;
+                const profit = val - (pos.amount * pos.avg);
+                wallet.cash += val;
+                delete wallet.positions[sym];
+                div.innerHTML = `<span class="log-sell">SELL ${sym}</span> PnL: $${profit.toFixed(2)}`;
+            }
+            
+            logBox.prepend(div);
+            localStorage.setItem('titanWallet', JSON.stringify(wallet));
+            updateWalletUI();
+        }
+
+        function updateWalletUI() {
+            document.getElementById('walletCash').innerText = `$${wallet.cash.toFixed(0)}`;
+            // Calc Equity
+            let eq = wallet.cash;
+            Object.keys(wallet.positions).forEach(k => {
+                if(marketData[k]) eq += wallet.positions[k].amount * marketData[k].price;
+            });
+            document.getElementById('walletEquity').innerText = `$${eq.toFixed(0)}`;
+        }
+
+        // --- 6. FEEDS & UTILS ---
+        async function fetchNews() {
+            try {
+                const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss');
+                const data = await res.json();
+                const feed = document.getElementById('newsFeed');
+                feed.innerHTML = data.items.map(i => `
+                    <div class="news-item" onclick="window.open('${i.link}')">
+                        🔥 ${i.title}
+                    </div>
+                `).join('');
+            } catch(e) {}
+        }
+
+        async function fetchDex() {
+            try {
+                const res = await fetch('https://api.coingecko.com/api/v3/search/trending');
+                const data = await res.json();
+                const feed = document.getElementById('dexFeed');
+                feed.innerHTML = data.coins.slice(0,5).map(c => `
+                    <div class="news-item">
+                        <img src="${c.item.thumb}" style="width:12px; vertical-align:middle"> 
+                        <b>${c.item.symbol}</b> #${c.item.market_cap_rank}
+                    </div>
+                `).join('');
+            } catch(e) {}
+        }
+
+        async function fetchSentiment() {
+            try {
+                const r = await fetch('https://api.alternative.me/fng/');
+                const d = await r.json();
+                document.getElementById('fgValue').innerText = d.data[0].value;
+            } catch(e){}
+        }
+
+        function startWhaleStream() {
+            const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade/ethusdt@trade/solusdt@trade');
+            const feed = document.getElementById('whaleFeed');
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                const val = parseFloat(d.p) * parseFloat(d.q);
+                if(val > 50000) {
+                    const div = document.createElement('div');
+                    div.className = "log-item";
+                    div.innerHTML = `<span style="color:${d.m?'#ff7b72':'#2ea043'}">${d.s.replace('USDT','')} $${Math.floor(val/1000)}k</span>`;
+                    feed.prepend(div);
+                    if(feed.childElementCount > 20) feed.lastChild.remove();
+                }
+            }
+        }
+
+        function startArbSim() {
+            const feed = document.getElementById('arbFeed');
+            setInterval(() => {
+                const spread = (Math.random()*0.5 + 0.1).toFixed(2);
+                const div = document.createElement('div');
+                div.className = "log-item";
+                div.innerHTML = `BTC: Bin > Coin <b class="green-txt">+${spread}%</b>`;
+                feed.prepend(div);
+                if(feed.childElementCount > 10) feed.lastChild.remove();
+            }, 4000);
         }
 
         function openChart(sym) {
@@ -358,9 +466,7 @@
                 style="width:100%; height:100%; border:none;"></iframe>`;
         }
 
-        // Run
         init();
-        setInterval(init, 30000); // Re-scan every 30s
     </script>
 </body>
 </html>
