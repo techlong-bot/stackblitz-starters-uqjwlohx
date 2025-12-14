@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Whale Tracker</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { text-align: center; margin-bottom: 20px; }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #161b22;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        /* BUTTONS */
+        .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-all { background-color: #30363d; color: white; }
+        .btn-buy { background-color: #00ff00; color: black; }
+        button:hover { opacity: 0.8; }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid #30363d; color: #8b949e; }
+        td { padding: 15px; border-bottom: 1px solid #21262d; vertical-align: middle; }
+        
+        .coin-info { display: flex; align-items: center; gap: 10px; }
+        .coin-icon { width: 30px; height: 30px; border-radius: 50%; }
+        
+        .signal-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #0d1117;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Colors for the 24h Change Text */
+        .green-text { color: #00ff00; }
+        .red-text { color: #ff4d4d; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🧠 Smart Whale Signals</h1>
+
+        <div class="controls">
+            <button class="btn-all" onclick="filterTable('ALL')">Show All</button>
+            <button class="btn-buy" onclick="filterTable('BUY')">Show Buying Opps 🚀</button>
+        </div>
+        
+        <table id="cryptoTable">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Price</th>
+                    <th>24h Change</th>
+                    <th>Netflow (Est)</th>
+                    <th>Signal</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="5" style="text-align:center">Analyzing market...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let currentFilter = 'ALL';
+        let marketData = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch('/market-data');
+                marketData = await response.json();
+                renderTable();
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = ""; 
+
+            marketData.forEach(coin => {
+                // Filter Logic: "BUY" matches "BUY THE DIP"
+                if (currentFilter === 'BUY' && !coin.signal.includes('BUY')) {
+                    return; 
+                }
+
+                // Color the 24h change (Green for positive, Red for negative)
+                const changeColor = coin.change24h >= 0 ? 'green-text' : 'red-text';
+                const changeSign = coin.change24h >= 0 ? '+' : '';
+
+                const row = `
+                    <tr>
+                        <td>
+                            <div class="coin-info">
+                                <img src="${coin.image}" class="coin-icon">
+                                <span>${coin.name} <small>(${coin.symbol})</small></span>
+                            </div>
+                        </td>
+                        <td>$${coin.price.toLocaleString()}</td>
+                        <td class="${changeColor}">${changeSign}${coin.change24h.toFixed(2)}%</td>
+                        <td>${coin.netflow} BTC</td>
+                        <td>
+                            <span class="signal-badge" style="background-color: ${coin.signalColor}">
+                                ${coin.signal}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            if (tableBody.innerHTML === "") {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center">No Buying Opportunities right now.</td></tr>`;
+            }
+        }
+
+        function filterTable(type) {
+            currentFilter = type;
+            renderTable();
+        }
+
+        loadData();
+        setInterval(loadData, 10000); 
+    </script>
+
+</body>
+</html>
