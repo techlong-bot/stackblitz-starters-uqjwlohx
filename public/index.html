@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Whale Signal Terminal</title>
+    <title>Titan Crypto Terminal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
@@ -13,13 +13,13 @@
             overflow-x: hidden;
         }
 
-        h1 { text-align: center; margin-bottom: 20px; color: #58a6ff; font-size: 24px; }
+        h1 { text-align: center; margin-bottom: 20px; color: #58a6ff; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
 
         .main-layout {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            max-width: 1200px;
+            max-width: 1800px;
             margin: 0 auto;
         }
 
@@ -28,15 +28,17 @@
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            flex: 1;
+            flex: 3;
             min-width: 300px;
             border: 1px solid #30363d;
             display: flex;
             flex-direction: column;
         }
 
+        .panel-right { flex: 1; }
+
         .panel-header {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             margin-bottom: 15px;
             padding-bottom: 10px;
@@ -46,62 +48,48 @@
             align-items: center;
         }
 
-        /* --- LEFT PANEL --- */
-        .controls { display: flex; gap: 10px; }
-        button { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .btn-all { background-color: #30363d; color: white; }
-        .btn-buy { background-color: #2ea043; color: white; }
-        
+        /* TABLE */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: right; padding: 10px; color: #8b949e; font-size: 12px; }
+        th { text-align: right; padding: 12px 8px; color: #8b949e; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #30363d; }
         th:first-child { text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #21262d; vertical-align: middle; text-align: right; font-size: 14px; }
+        td { padding: 12px 8px; border-bottom: 1px solid #21262d; vertical-align: middle; font-size: 13px; text-align: right; }
         td:first-child { text-align: left; }
-
-        .coin-info { display: flex; align-items: center; gap: 8px; }
+        
+        .coin-info { display: flex; align-items: center; gap: 10px; }
         .coin-icon { width: 24px; height: 24px; border-radius: 50%; }
-        .signal-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; white-space: nowrap; }
 
-        /* --- RIGHT PANEL --- */
-        #whaleFeed {
-            height: 600px;
-            overflow-y: auto;
-            font-family: 'Courier New', Courier, monospace;
-        }
+        /* SCORE BAR */
+        .score-container { width: 100px; height: 8px; background: #30363d; border-radius: 4px; display: inline-block; overflow: hidden; }
+        .score-fill { height: 100%; border-radius: 4px; }
+        
+        .score-bull { background: linear-gradient(90deg, #2ea043, #3fb950); }
+        .score-bear { background: linear-gradient(90deg, #ff7b72, #ffa198); }
+        .score-neutral { background: #8b949e; }
 
-        .feed-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #21262d;
-            font-size: 13px;
-            animation: fadeIn 0.3s ease-in;
-        }
-
+        /* BADGES */
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 4px; }
+        .bg-green { background: rgba(46, 160, 67, 0.2); color: #2ea043; }
+        .bg-red { background: rgba(255, 123, 114, 0.2); color: #ff7b72; }
+        
+        /* WHALE FEED */
+        #whaleFeed { height: 700px; overflow-y: auto; font-family: monospace; }
+        .feed-item { padding: 8px; border-bottom: 1px solid #21262d; font-size: 12px; display: flex; justify-content: space-between; animation: fadeIn 0.3s; }
         .feed-buy { border-left: 3px solid #2ea043; background: rgba(46, 160, 67, 0.05); }
         .feed-sell { border-left: 3px solid #ff7b72; background: rgba(255, 123, 114, 0.05); }
-        
-        .whale-amt { font-weight: bold; color: #e6edf3; font-size: 14px; }
-        .whale-sub { color: #8b949e; font-size: 11px; margin-top: 4px; }
-        .green-text { color: #2ea043; }
-        .red-text { color: #ff7b72; }
-        
+        .whale-amt { font-weight: bold; color: #e6edf3; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <h1>🐋 Whale Signal Terminal</h1>
+    <h1>⚡ Titan Crypto Terminal ⚡</h1>
 
     <div class="main-layout">
         
         <div class="panel">
             <div class="panel-header">
-                <span>Scanner (Top 25)</span>
-                <div class="controls">
-                    <button class="btn-all" onclick="filterTable('ALL')">All</button>
-                    <button class="btn-buy" onclick="filterTable('BUY')">Buys</button>
-                </div>
+                <span>Confluence Matrix (Price + Pattern + Indicators + Volume)</span>
             </div>
             
             <table id="cryptoTable">
@@ -109,192 +97,223 @@
                     <tr>
                         <th>Asset</th>
                         <th>Price</th>
-                        <th>Signal</th>
+                        <th>RSI</th>
+                        <th>MACD</th>
+                        <th>Bollinger</th>
+                        <th>Confluence Score</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="3" style="text-align:center; padding:20px">Loading top coins...</td></tr>
+                    <tr><td colspan="7" style="text-align:center; padding:20px">Calculating Complex Indicators...</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <div class="panel">
+        <div class="panel panel-right">
             <div class="panel-header">
-                <span>🚨 Multi-Asset Whale Feed</span>
+                <span>🚨 Whale Radar</span>
                 <span style="font-size:12px; color: #2ea043">● Live</span>
             </div>
             <div id="whaleFeed">
-                <div style="text-align:center; padding:20px; color:#8b949e">
-                    Initializing WebSocket connection for Top 25 assets...
-                </div>
+                <div style="text-align:center; padding:20px; color:#8b949e">Initializing Radar...</div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // CONFIGURATION
-        const WHALE_THRESHOLD = 50000; // Only show trades > $50k
-        const IGNORED_COINS = ['usdt', 'usdc', 'dai', 'fdusd', 'tusd', 'steth', 'wbtc']; // Don't track stablecoins/wrappers
+        const WHALE_THRESHOLD = 50000; 
+        const IGNORED_COINS = ['usdt', 'usdc', 'dai', 'fdusd', 'wbtc', 'steth'];
         
         let marketData = [];
-        let currentFilter = 'ALL';
         let socket = null;
 
-        // 1. Fetch Data First
+        // --- MATH ENGINES ---
+
+        // 1. RSI
+        function calcRSI(prices, period = 14) {
+            if (prices.length < period + 1) return 50;
+            let gains = 0, losses = 0;
+            for (let i = 1; i <= period; i++) {
+                let change = prices[i] - prices[i-1];
+                if (change > 0) gains += change; else losses += Math.abs(change);
+            }
+            let avgGain = gains / period;
+            let avgLoss = losses / period;
+            for (let i = period + 1; i < prices.length; i++) {
+                let change = prices[i] - prices[i-1];
+                let g = change > 0 ? change : 0;
+                let l = change < 0 ? Math.abs(change) : 0;
+                avgGain = (avgGain * 13 + g) / 14;
+                avgLoss = (avgLoss * 13 + l) / 14;
+            }
+            if (avgLoss === 0) return 100;
+            return 100 - (100 / (1 + (avgGain / avgLoss)));
+        }
+
+        // 2. MACD (Moving Average Convergence Divergence)
+        function calcEMA(prices, period) {
+            const k = 2 / (period + 1);
+            let ema = prices[0];
+            for (let i = 1; i < prices.length; i++) {
+                ema = prices[i] * k + ema * (1 - k);
+            }
+            return ema;
+        }
+
+        function calcMACD(prices) {
+            // Need at least 26 candles
+            if (prices.length < 26) return { hist: 0, signal: "Neutral" };
+            
+            const ema12 = calcEMA(prices.slice(-12), 12);
+            const ema26 = calcEMA(prices.slice(-26), 26);
+            const macdLine = ema12 - ema26;
+            
+            // Simplified Signal: If MACD Line > 0 it's usually bullish momentum
+            return { val: macdLine, signal: macdLine > 0 ? "Bull" : "Bear" };
+        }
+
+        // 3. Bollinger Bands (Volatility)
+        function calcBollinger(prices, period = 20) {
+            if (prices.length < period) return { signal: "Neutral" };
+            const slice = prices.slice(-period);
+            const mean = slice.reduce((a,b) => a+b, 0) / period;
+            const variance = slice.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / period;
+            const stdDev = Math.sqrt(variance);
+            
+            const upper = mean + (stdDev * 2);
+            const lower = mean - (stdDev * 2);
+            const current = prices[prices.length - 1];
+
+            // Pattern: Squeeze or Breakout?
+            if (current < lower) return { signal: "Oversold (Buy)", score: 1 };
+            if (current > upper) return { signal: "Overbought (Sell)", score: -1 };
+            return { signal: "In Range", score: 0 };
+        }
+
+        // --- MASTER ALGO ---
+        function generateConfluence(coin, prices) {
+            let score = 50; // Start Neutral
+            
+            // A. RSI Logic (30 pts)
+            const rsi = calcRSI(prices);
+            if (rsi < 30) score += 20; // Bullish
+            if (rsi > 70) score -= 20; // Bearish
+
+            // B. MACD Logic (30 pts)
+            const macd = calcMACD(prices);
+            if (macd.signal === "Bull") score += 15; else score -= 15;
+
+            // C. Bollinger Logic (20 pts)
+            const bb = calcBollinger(prices);
+            if (bb.score === 1) score += 15; // Price at bottom
+            if (bb.score === -1) score -= 15; // Price at top
+
+            // D. Trend Logic (20 pts)
+            if (coin.price_change_percentage_24h > 0) score += 10; else score -= 10;
+
+            return { score, rsi, macd, bb };
+        }
+
+        // --- FETCH & RENDER ---
         async function initApp() {
             try {
-                // Get list from CoinGecko
-                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=25&page=1&sparkline=false');
+                // Fetch data with Sparkline (History)
+                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=25&page=1&sparkline=true');
                 if (!response.ok) throw new Error("API Limit");
                 const coins = await response.json();
 
-                // Process for Table
                 marketData = coins.map(coin => {
-                    const priceChange = coin.price_change_percentage_24h;
-                    let signal = "NEUTRAL";
-                    let signalColor = "gray";
-
-                    if (priceChange < -2.5) { signal = "BUY DIP"; signalColor = "#2ea043"; } 
-                    else if (priceChange > 2.5) { signal = "SELL TOP"; signalColor = "#ff7b72"; }
+                    const history = coin.sparkline_in_7d.price;
+                    const result = generateConfluence(coin, history);
 
                     return {
-                        symbol: coin.symbol.toUpperCase(), // BTC
-                        rawSymbol: coin.symbol.toLowerCase(), // btc
-                        name: coin.name,
-                        price: coin.current_price,
-                        change: priceChange,
+                        symbol: coin.symbol.toUpperCase(),
+                        rawSymbol: coin.symbol.toLowerCase(),
                         image: coin.image,
-                        signal: signal,
-                        signalColor: signalColor
+                        price: coin.current_price,
+                        ...result
                     };
                 });
 
                 renderTable();
-                
-                // Start WebSocket ONLY after we have the list
-                startMultiAssetSocket(marketData);
+                startWhaleSocket(marketData);
 
             } catch (error) {
-                console.log("Init Error:", error);
-                setTimeout(initApp, 60000); // Retry in 1 min if failed
+                console.log("Retry in 60s...", error);
+                setTimeout(initApp, 60000);
             }
         }
 
-        // 2. Render Left Table
         function renderTable() {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = ""; 
-            const filtered = marketData.filter(c => currentFilter === 'BUY' ? c.signal.includes('BUY') : true);
-            
-            filtered.forEach(coin => {
+
+            // Sort by Best Buy Opportunities first
+            marketData.sort((a,b) => b.score - a.score);
+
+            marketData.forEach(coin => {
+                let action = "HOLD";
+                let actionColor = "#8b949e";
+                let barClass = "score-neutral";
+
+                if (coin.score >= 80) { action = "STRONG BUY"; actionColor = "#2ea043"; barClass = "score-bull"; }
+                else if (coin.score >= 60) { action = "BUY"; actionColor = "#2ea043"; barClass = "score-bull"; }
+                else if (coin.score <= 20) { action = "STRONG SELL"; actionColor = "#ff7b72"; barClass = "score-bear"; }
+                else if (coin.score <= 40) { action = "SELL"; actionColor = "#ff7b72"; barClass = "score-bear"; }
+
                 const row = `
                     <tr>
                         <td>
                             <div class="coin-info">
                                 <img src="${coin.image}" class="coin-icon">
-                                <div>
-                                    <b>${coin.symbol}</b>
-                                    <div style="font-size:11px" class="${coin.change >= 0 ? 'green-text' : 'red-text'}">
-                                        ${coin.change.toFixed(2)}%
-                                    </div>
-                                </div>
+                                <b>${coin.symbol}</b>
                             </div>
                         </td>
                         <td>$${coin.price.toLocaleString()}</td>
-                        <td><span class="signal-badge" style="background:${coin.signalColor}; color:white">${coin.signal}</span></td>
+                        <td>${coin.rsi.toFixed(0)}</td>
+                        <td><span class="badge ${coin.macd.signal==='Bull'?'bg-green':'bg-red'}">${coin.macd.signal}</span></td>
+                        <td><span style="font-size:11px">${coin.bb.signal}</span></td>
+                        <td>
+                            <div class="score-container">
+                                <div class="score-fill ${barClass}" style="width: ${coin.score}%"></div>
+                            </div>
+                            <span style="font-size:10px; margin-left:5px">${coin.score}</span>
+                        </td>
+                        <td style="color:${actionColor}; font-weight:bold">${action}</td>
                     </tr>`;
                 tableBody.innerHTML += row;
             });
         }
 
-        // 3. Start Dynamic WebSocket
-        function startMultiAssetSocket(coins) {
-            if (socket) return; // Don't start twice
-
-            // A. Filter out stablecoins & build stream string
-            const streams = coins
-                .filter(c => !IGNORED_COINS.includes(c.rawSymbol)) // Remove USDT, USDC etc
-                .map(c => `${c.rawSymbol}usdt@trade`) // format: btcusdt@trade
-                .join('/');
-
-            // B. Connect to Binance Multiplex Stream
-            const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
-            console.log("Connecting to:", wsUrl);
+        // --- WHALE SOCKET ---
+        function startWhaleSocket(coins) {
+            if (socket) return;
+            const streams = coins.filter(c => !IGNORED_COINS.includes(c.rawSymbol)).map(c => `${c.rawSymbol}usdt@trade`).join('/');
+            socket = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
             
-            socket = new WebSocket(wsUrl);
             const feedBox = document.getElementById('whaleFeed');
-            feedBox.innerHTML = ""; // Clear "Initializing" text
-
-            socket.onopen = () => {
-                const note = document.createElement('div');
-                note.style.cssText = "text-align:center; padding:10px; color:#2ea043; font-size:12px;";
-                note.innerText = `Connected to ${streams.split('/').length} Top Assets`;
-                feedBox.appendChild(note);
-            };
-
+            socket.onopen = () => feedBox.innerHTML = `<div style="text-align:center; padding:10px; color:#2ea043;">✅ Radar Active</div>`;
+            
             socket.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
-                const data = msg.data; // The actual trade data is inside .data
-                
-                const price = parseFloat(data.p);
-                const quantity = parseFloat(data.q);
-                const totalUsd = price * quantity;
-
-                // FILTER: Only Whales
+                const data = JSON.parse(event.data).data;
+                const totalUsd = parseFloat(data.p) * parseFloat(data.q);
                 if (totalUsd > WHALE_THRESHOLD) {
-                    const symbol = data.s.replace('USDT', ''); // Clean name
-                    const isSell = data.m; // data.m = true means Maker was Buyer (so Taker was Seller)
-                    const type = isSell ? 'SELL' : 'BUY';
+                    const type = data.m ? 'SELL' : 'BUY';
                     const colorClass = type === 'BUY' ? 'feed-buy' : 'feed-sell';
                     const icon = type === 'BUY' ? '🟢' : '🔴';
-
                     const item = document.createElement('div');
                     item.className = `feed-item ${colorClass}`;
-                    item.innerHTML = `
-                        <div>
-                            <div class="whale-amt">${icon} ${symbol} ${type}</div>
-                            <div class="whale-sub">Price: $${price.toLocaleString()}</div>
-                        </div>
-                        <div style="text-align:right">
-                            <div class="whale-amt">$${Math.floor(totalUsd).toLocaleString()}</div>
-                            <div class="whale-sub">${quantity.toFixed(2)} Coins</div>
-                        </div>
-                    `;
-
+                    item.innerHTML = `<div><span class="whale-amt">${icon} ${data.s.replace('USDT','')}</span></div><div class="whale-amt">$${Math.floor(totalUsd).toLocaleString()}</div>`;
                     feedBox.prepend(item);
-                    
-                    // Limit feed history
-                    if (feedBox.children.length > 50) {
-                        feedBox.removeChild(feedBox.lastChild);
-                    }
+                    if (feedBox.children.length > 50) feedBox.removeChild(feedBox.lastChild);
                 }
             };
         }
 
-        function filterTable(t) { currentFilter = t; renderTable(); }
-
-        // Start everything
         initApp();
-
-        // Refresh market data (table) every 60s (Socket stays open)
-        setInterval(() => {
-            // We only refresh the table data, we don't reconnect socket to avoid lag
-            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=25&page=1&sparkline=false')
-                .then(res => res.json())
-                .then(data => {
-                    // Update prices without breaking socket
-                    marketData.forEach(oldCoin => {
-                        const newCoin = data.find(c => c.symbol.toUpperCase() === oldCoin.symbol);
-                        if(newCoin) {
-                            oldCoin.price = newCoin.current_price;
-                            oldCoin.change = newCoin.price_change_percentage_24h;
-                        }
-                    });
-                    renderTable();
-                });
-        }, 60000);
-
+        setInterval(initApp, 60000); 
     </script>
 </body>
 </html>
